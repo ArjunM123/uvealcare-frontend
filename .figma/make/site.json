@@ -1,0 +1,10 @@
+{
+  "description": "Streamline uveal melanoma care with a clinical workflow platform that enhances collaboration, reduces administrative burdens, and ensures comprehensive patient information.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
