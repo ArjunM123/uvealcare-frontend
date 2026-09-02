@@ -847,8 +847,51 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
   // stops every patient from showing "Margaret T. Sullivan" at the top.
   const [caseInfo, setCaseInfo] = useState<{
     patient: string; mrn: string; care_stage: string; care_stages: string[];
-    diagnosis: string | null; laterality: string | null;
+    diagnosis: string | null; laterality: string | null; dob: string | null;
+    sex: string | null; phone: string | null; insurance: string | null;
+    primary_provider: string | null; referring_provider: string | null;
   } | null>(null);
+
+  // Real editable contact/demographic info — this is what replaces the
+  // "Not recorded" placeholders with an actual form. Only opens when the
+  // person clicks "Edit"; otherwise the card is just a read-only summary.
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [editForm, setEditForm] = useState({ sex: "", phone: "", insurance: "", primary_provider: "", referring_provider: "" });
+  const [isSavingInfo, setIsSavingInfo] = useState(false);
+  const [saveInfoError, setSaveInfoError] = useState<string | null>(null);
+
+  const loadCaseInfo = () => {
+    apiFetch(`${API_BASE}/cases/${caseId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCaseInfo(data);
+        setEditForm({
+          sex: data.sex ?? "",
+          phone: data.phone ?? "",
+          insurance: data.insurance ?? "",
+          primary_provider: data.primary_provider ?? "",
+          referring_provider: data.referring_provider ?? "",
+        });
+      })
+      .catch((err) => console.error("Couldn't reach backend:", err));
+  };
+
+  const handleSaveInfo = () => {
+    setSaveInfoError(null);
+    setIsSavingInfo(true);
+    apiFetch(`${API_BASE}/cases/${caseId}/patient`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Couldn't save patient info.");
+        loadCaseInfo();
+        setIsEditingInfo(false);
+      })
+      .catch((err) => setSaveInfoError(err.message))
+      .finally(() => setIsSavingInfo(false));
+  };
 
   // Live readiness data — now includes the full checklist (with real
   // values), not just the missing-items summary, so this screen can show
@@ -860,10 +903,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
   } | null>(null);
 
   useEffect(() => {
-    apiFetch(`${API_BASE}/cases/${caseId}`)
-      .then((res) => res.json())
-      .then((data) => setCaseInfo(data))
-      .catch((err) => console.error("Couldn't reach backend:", err));
+    loadCaseInfo();
 
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
       .then((res) => res.json())
@@ -962,24 +1002,89 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
           <div className="grid grid-cols-[1fr_1fr_300px] gap-5">
             {/* Patient Info */}
             <Card className="p-5">
-              <SectionHeader>Patient Information</SectionHeader>
-              <div className="space-y-3">
-                {[
-                  { label: "Full Name", value: caseInfo?.patient ?? "…" },
-                  { label: "Date of Birth", value: "Not recorded" },
-                  { label: "Sex", value: "Not recorded" },
-                  { label: "MRN", value: caseInfo?.mrn ?? "…", mono: true },
-                  { label: "Phone", value: "Not recorded" },
-                  { label: "Insurance", value: "Not recorded" },
-                  { label: "Primary Provider", value: "Not recorded" },
-                  { label: "Referring Provider", value: "Not recorded" },
-                ].map((r) => (
-                  <div key={r.label} className="flex justify-between items-start gap-4">
-                    <span className="text-[#94A3B8] text-xs shrink-0">{r.label}</span>
-                    <span className={`text-xs text-right ${r.mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#CBD5E1] italic" : "text-[#0F172A]"}`}>{r.value}</span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-3">
+                <SectionHeader>Patient Information</SectionHeader>
+                {!isEditingInfo && (
+                  <button
+                    onClick={() => setIsEditingInfo(true)}
+                    className="text-xs text-[#0EA5E9] hover:underline -mt-3"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
+
+              {!isEditingInfo ? (
+                <div className="space-y-3">
+                  {[
+                    { label: "Full Name", value: caseInfo?.patient ?? "…" },
+                    { label: "Date of Birth", value: caseInfo?.dob ?? "Not recorded" },
+                    { label: "Sex", value: caseInfo?.sex ?? "Not recorded" },
+                    { label: "MRN", value: caseInfo?.mrn ?? "…", mono: true },
+                    { label: "Phone", value: caseInfo?.phone ?? "Not recorded" },
+                    { label: "Insurance", value: caseInfo?.insurance ?? "Not recorded" },
+                    { label: "Primary Provider", value: caseInfo?.primary_provider ?? "Not recorded" },
+                    { label: "Referring Provider", value: caseInfo?.referring_provider ?? "Not recorded" },
+                  ].map((r) => (
+                    <div key={r.label} className="flex justify-between items-start gap-4">
+                      <span className="text-[#94A3B8] text-xs shrink-0">{r.label}</span>
+                      <span className={`text-xs text-right ${r.mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#CBD5E1] italic" : "text-[#0F172A]"}`}>{r.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] text-[#94A3B8] mb-1">Sex</label>
+                    <select
+                      value={editForm.sex}
+                      onChange={(e) => setEditForm({ ...editForm, sex: e.target.value })}
+                      className="w-full border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0EA5E9]"
+                    >
+                      <option value="">Not recorded</option>
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  {[
+                    { key: "phone", label: "Phone", placeholder: "(555) 555-0100" },
+                    { key: "insurance", label: "Insurance", placeholder: "e.g. Blue Cross Blue Shield" },
+                    { key: "primary_provider", label: "Primary Provider", placeholder: "Dr. A. Reyes" },
+                    { key: "referring_provider", label: "Referring Provider", placeholder: "Dr. J. Thornton" },
+                  ].map((f) => (
+                    <div key={f.key}>
+                      <label className="block text-[10px] text-[#94A3B8] mb-1">{f.label}</label>
+                      <input
+                        value={(editForm as any)[f.key]}
+                        onChange={(e) => setEditForm({ ...editForm, [f.key]: e.target.value })}
+                        placeholder={f.placeholder}
+                        className="w-full border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0EA5E9]"
+                      />
+                    </div>
+                  ))}
+
+                  {saveInfoError && (
+                    <p className="text-[10px] text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1.5">{saveInfoError}</p>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => { setIsEditingInfo(false); setSaveInfoError(null); }}
+                      className="flex-1 border border-[#D1D5DB] text-[#374151] rounded py-1.5 text-xs font-medium hover:bg-[#F8FAFC] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveInfo}
+                      disabled={isSavingInfo}
+                      className="flex-1 bg-[#0F2D56] text-white rounded py-1.5 text-xs font-semibold hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-60"
+                    >
+                      {isSavingInfo ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </Card>
 
             {/* Diagnosis & Assessment */}
