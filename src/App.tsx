@@ -424,7 +424,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
 
 // TEMP: paste the case ID that seed.py printed on your machine
 const MARGARET_CASE_ID = "a178cdd3-9bd9-499a-92c8-9f48313171e5";
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://uvealcare-backend.onrender.com";
 
 // This is what the frontend does with the token the backend now requires:
 // holds it after login, and attaches it to every single request from
