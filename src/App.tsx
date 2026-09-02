@@ -279,6 +279,41 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Real account creation — this is what was missing before: the app
+  // only ever had one hardcoded demo login. Toggling this shows a real
+  // signup form instead of the sign-in form.
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [signupName, setSignupName] = useState("");
+  const [signupRole, setSignupRole] = useState("ophthalmologist");
+
+  const handleSignUp = () => {
+    setError(null);
+    if (!signupName.trim() || !email.trim() || !password) {
+      setError("Name, email, and password are required.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    setIsSubmitting(true);
+    apiFetch(`${API_BASE}/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: signupName, email, password, role: signupRole }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Couldn't create account.");
+        // Real accounts are signed in immediately after creation, same
+        // as after a normal login — no separate "please log in" step.
+        authToken = data.token;
+        onLogin({ name: data.name, email: data.email, role: data.role });
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setIsSubmitting(false));
+  };
+
   const handleSignIn = () => {
     setError(null);
     setIsSubmitting(true);
@@ -363,10 +398,21 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
             <span className="text-[#0F172A] font-semibold text-lg">UvealCare</span>
           </div>
 
-          <h2 className="text-[#0F172A] text-2xl font-semibold mb-1">Sign in</h2>
-          <p className="text-[#64748B] text-sm mb-8">Access your clinical workspace</p>
+          <h2 className="text-[#0F172A] text-2xl font-semibold mb-1">{isSignUp ? "Create account" : "Sign in"}</h2>
+          <p className="text-[#64748B] text-sm mb-8">{isSignUp ? "Set up your clinical workspace" : "Access your clinical workspace"}</p>
 
           <div className="space-y-4">
+            {isSignUp && (
+              <div>
+                <label className="block text-xs font-medium text-[#374151] mb-1.5">Full name</label>
+                <input
+                  value={signupName}
+                  onChange={(e) => setSignupName(e.target.value)}
+                  className="w-full border border-[#D1D5DB] rounded px-3 py-2.5 text-sm text-[#0F172A] bg-white focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
+                  placeholder="Dr. Jane Smith"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1.5">Email address</label>
               <input
@@ -377,18 +423,35 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
                 placeholder="clinician@hospital.org"
               />
             </div>
+            {isSignUp && (
+              <div>
+                <label className="block text-xs font-medium text-[#374151] mb-1.5">Role</label>
+                <select
+                  value={signupRole}
+                  onChange={(e) => setSignupRole(e.target.value)}
+                  className="w-full border border-[#D1D5DB] rounded px-3 py-2.5 text-sm text-[#0F172A] bg-white focus:outline-none focus:border-[#0EA5E9] transition-all"
+                >
+                  <option value="ophthalmologist">Ophthalmologist</option>
+                  <option value="radiation_oncologist">Radiation Oncologist</option>
+                  <option value="medical_oncologist">Medical Oncologist</option>
+                  <option value="nurse_navigator">Nurse Navigator</option>
+                  <option value="coordinator">Tumor Board Coordinator</option>
+                </select>
+              </div>
+            )}
             <div>
               <div className="flex justify-between mb-1.5">
                 <label className="block text-xs font-medium text-[#374151]">Password</label>
-                <a href="#" className="text-xs text-[#0EA5E9] hover:underline">Forgot password?</a>
+                {!isSignUp && <a href="#" className="text-xs text-[#0EA5E9] hover:underline">Forgot password?</a>}
               </div>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
+                onKeyDown={(e) => e.key === "Enter" && (isSignUp ? handleSignUp() : handleSignIn())}
                 className="w-full border border-[#D1D5DB] rounded px-3 py-2.5 text-sm text-[#0F172A] bg-white focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
               />
+              {isSignUp && <p className="text-[10px] text-[#94A3B8] mt-1">At least 8 characters.</p>}
             </div>
 
             {error && (
@@ -396,11 +459,18 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
             )}
 
             <button
-              onClick={handleSignIn}
+              onClick={isSignUp ? handleSignUp : handleSignIn}
               disabled={isSubmitting}
               className="w-full bg-[#0F2D56] text-white rounded py-2.5 text-sm font-semibold hover:bg-[#0F2D56]/90 transition-colors mt-2 disabled:opacity-60"
             >
-              {isSubmitting ? "Signing in…" : "Sign In"}
+              {isSubmitting ? (isSignUp ? "Creating account…" : "Signing in…") : (isSignUp ? "Create Account" : "Sign In")}
+            </button>
+
+            <button
+              onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
+              className="w-full text-xs text-[#64748B] hover:text-[#0F2D56] transition-colors"
+            >
+              {isSignUp ? "Already have an account? Sign in" : "Need an account? Create one"}
             </button>
           </div>
 
@@ -424,7 +494,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
 
 // TEMP: paste the case ID that seed.py printed on your machine
 const MARGARET_CASE_ID = "a178cdd3-9bd9-499a-92c8-9f48313171e5";
-const API_BASE = "https://uvealcare-backend.onrender.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 // This is what the frontend does with the token the backend now requires:
 // holds it after login, and attaches it to every single request from
