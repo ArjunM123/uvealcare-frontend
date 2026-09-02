@@ -1474,6 +1474,39 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
 }
 
 // 5. IMAGING
+// A plain <img src="..."> can't attach an Authorization header, but every
+// endpoint in this app — including image serving — correctly requires one.
+// This component fetches the image bytes through apiFetch like everything
+// else, then hands the browser a local object URL to actually display it.
+function AuthenticatedImage({ caseId, fieldKey, alt, className }: { caseId: string; fieldKey: string; alt: string; className?: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
+    apiFetch(`${API_BASE}/cases/${caseId}/images/${fieldKey}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("No image");
+        return res.blob();
+      })
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setSrc(objectUrl);
+      })
+      .catch(() => setSrc(null));
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [caseId, fieldKey]);
+
+  if (!src) return null;
+  return <img src={src} alt={alt} className={className} />;
+}
+
 function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
   // Same live-fetch pattern as the other screens — pulling the full
   // checklist so both the imaging table AND the measurements card below
@@ -1486,6 +1519,66 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   // button shows a brief loading state.
   const [orderingKey, setOrderingKey] = useState<string | null>(null);
 
+  // Which fields have a real uploaded image — just filenames/dates, not
+  // the image data itself, so this list stays lightweight.
+  const [uploadedImages, setUploadedImages] = useState<
+    { field_key: string; filename: string; uploaded_at: string | null }[]
+  >([]);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const loadImageList = () => {
+    apiFetch(`${API_BASE}/cases/${caseId}/images`)
+      .then((res) => res.json())
+      .then((data) => setUploadedImages(data))
+      .catch((err) => console.error("Couldn't reach backend:", err));
+  };
+
+  // Reads the chosen file as base64 in the browser, then sends it up —
+  // this is what makes "upload a real image" actually real, instead of
+  // the app only ever showing text descriptions of a study.
+  const handleImageUpload = (fieldKey: string, file: File) => {
+    setUploadError(null);
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please choose an image file.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setUploadError("Image must be under 8MB.");
+      return;
+    }
+    setUploadingKey(fieldKey);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(",")[1]; // strip the "data:image/png;base64," prefix
+      apiFetch(`${API_BASE}/cases/${caseId}/images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          field_key: fieldKey,
+          filename: file.name,
+          content_type: file.type,
+          data_base64: base64,
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.detail || "Upload failed.");
+          }
+          loadImageList();
+        })
+        .catch((err) => setUploadError(err.message))
+        .finally(() => setUploadingKey(null));
+    };
+    reader.onerror = () => {
+      setUploadError("Couldn't read that file.");
+      setUploadingKey(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const loadImaging = () => {
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
       .then((res) => res.json())
@@ -1495,6 +1588,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
 
   useEffect(() => {
     loadImaging();
+    loadImageList();
   }, [caseId]);
 
   const imagingItems = checklist?.filter((c) => c.category === "imaging") ?? null;
@@ -1594,23 +1688,55 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
         </button>
       </div>
 
+      {uploadError && (
+        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{uploadError}</p>
+      )}
+
       <Card>
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#F1F5F9] bg-[#FAFBFD]">
-              {["Study", "Status", "Source / Technician", "Findings", ""].map((h) => (
+              {["Study", "Status", "Image", "Source / Technician", "Findings", ""].map((h) => (
                 <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#F8FAFC]">
-            {imagingItems.map((s) => (
+            {imagingItems.map((s) => {
+              const hasImage = uploadedImages.some((img) => img.field_key === s.key);
+              return (
               <tr key={s.key} className={`${s.status === "missing" ? "bg-red-50/40" : s.status === "pending" ? "bg-amber-50/30" : "hover:bg-[#F8FAFC]"} transition-colors`}>
                 <td className="px-5 py-3.5">
                   <p className="text-sm font-medium text-[#0F172A]">{s.field}</p>
                 </td>
                 <td className="px-5 py-3.5">
                   <StatusBadge status={s.status as any} />
+                </td>
+                <td className="px-5 py-3.5">
+                  {hasImage ? (
+                    <AuthenticatedImage
+                      caseId={caseId}
+                      fieldKey={s.key}
+                      alt={`${s.field} image`}
+                      className="w-16 h-16 object-cover rounded border border-[#E2E8F0]"
+                    />
+                  ) : (
+                    <span className="text-[10px] text-[#CBD5E1] italic">No image</span>
+                  )}
+                  <label className="block mt-1 text-[10px] text-[#0EA5E9] hover:underline cursor-pointer">
+                    {uploadingKey === s.key ? "Uploading…" : hasImage ? "Replace" : "Upload"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingKey === s.key}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(s.key, file);
+                        e.target.value = ""; // allow re-selecting the same file later
+                      }}
+                    />
+                  </label>
                 </td>
                 <td className="px-5 py-3.5">
                   <p className={`text-xs ${s.source ? "text-[#374151]" : "text-[#CBD5E1]"}`}>{s.source ?? "Not assigned"}</p>
@@ -1642,7 +1768,8 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </Card>
