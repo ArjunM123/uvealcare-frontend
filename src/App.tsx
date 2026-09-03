@@ -1275,7 +1275,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
     ready_for_review: boolean;
-    checklist: { key: string; field: string; category: string; status: string }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[];
     missing_information: string[];
   } | null>(null);
 
@@ -1586,6 +1586,22 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                       <div className="w-5 text-center text-sm shrink-0">{iconFor(item.status)}</div>
                       <div className="flex-1">
                         <p className="text-sm text-[#0F172A] font-medium">{item.field}</p>
+                        {item.status === "complete" && item.value && (
+                          <p className="text-xs text-[#64748B] mt-1 leading-relaxed">{item.value}</p>
+                        )}
+                        {item.status === "complete" && (item.measurement_method || item.measurement_precision || item.measurement_length_type) && (
+                          <div className="flex flex-wrap gap-2 mt-1.5">
+                            {item.measurement_method && (
+                              <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-1.5 py-0.5 rounded">{item.measurement_method}</span>
+                            )}
+                            {item.measurement_precision && (
+                              <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-1.5 py-0.5 rounded">{item.measurement_precision}</span>
+                            )}
+                            {item.measurement_length_type && (
+                              <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-1.5 py-0.5 rounded">{item.measurement_length_type}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <StatusBadge status={item.status as any} />
                       {item.status !== "complete" && resolveFormKey !== item.key && (
