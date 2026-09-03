@@ -817,7 +817,7 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
               <SectionHeader>Next Tumor Board</SectionHeader>
               <div className="space-y-2">
                 <p className="text-[#0F172A] text-sm font-semibold">Thursday, Nov 14, 2024</p>
-                <p className="text-[#64748B] text-xs">2:00 PM — Conference Room B</p>
+                <p className="text-[#64748B] text-xs">2:00 PM — Video conference</p>
                 <div className="pt-2 border-t border-[#F1F5F9]">
                   <p className="text-[10px] text-[#94A3B8] mb-1.5">Cases Scheduled</p>
                   <p className="text-[#0F172A] text-xs font-medium">Sullivan, M. — Choroidal OD</p>
@@ -899,7 +899,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
   const [readinessSummary, setReadinessSummary] = useState<{
     readiness_pct: number;
     missing_information: string[];
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[];
   } | null>(null);
 
   useEffect(() => {
@@ -1200,6 +1200,9 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
         {activeTab === "molecular" && (
           <Card className="p-6 max-w-2xl">
             <SectionHeader>Molecular Testing</SectionHeader>
+            <p className="text-[10px] text-[#94A3B8] italic mb-3">
+              For uveal melanoma, molecular testing (e.g. GEP) is used for metastatic risk stratification and surveillance planning — not for diagnosis, which remains clinical.
+            </p>
             {(() => {
               const molecularItems = readinessSummary?.checklist.filter((c) => c.category === "molecular") ?? [];
               if (!readinessSummary) return <p className="text-xs text-[#94A3B8]">Loading…</p>;
@@ -1280,6 +1283,17 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   // brief "Resolving…" state on just that one button.
   const [resolvingKey, setResolvingKey] = useState<string | null>(null);
 
+  // Which item currently has its "Resolve" form open, and what's been
+  // typed into it. Replaces the old one-click "Resolve" that silently
+  // wrote a hardcoded placeholder instead of the actual finding — that
+  // was fine for a demo, but genuinely wrong for a field like Patient
+  // Counseling where the real content matters.
+  const [resolveFormKey, setResolveFormKey] = useState<string | null>(null);
+  const [resolveValue, setResolveValue] = useState("");
+  const [resolveMethod, setResolveMethod] = useState("");
+  const [resolvePrecision, setResolvePrecision] = useState("");
+  const [resolveLengthType, setResolveLengthType] = useState("");
+
   // Real tasks tied to this case — what "Assign task" buttons now
   // actually create, instead of doing nothing.
   const [tasks, setTasks] = useState<
@@ -1350,7 +1364,16 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   // This is the new piece: clicking "Resolve" actually writes to the
   // backend (POST), then re-fetches readiness so the percentage and
   // checklist update live — the first "write" action in the whole app.
-  const handleResolve = (fieldKey: string) => {
+  const openResolveForm = (fieldKey: string) => {
+    setResolveFormKey(fieldKey);
+    setResolveValue("");
+    setResolveMethod("");
+    setResolvePrecision("");
+    setResolveLengthType("");
+  };
+
+  const handleResolveSubmit = (fieldKey: string) => {
+    if (!resolveValue.trim()) return;
     setResolvingKey(fieldKey);
     apiFetch(`${API_BASE}/cases/${caseId}/values`, {
       method: "POST",
@@ -1358,12 +1381,18 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
       body: JSON.stringify({
         field_key: fieldKey,
         status: "complete",
-        value: "Marked complete via UI",
+        value: resolveValue,
         source: "Dr. A. Reyes",
+        measurement_method: resolveMethod || null,
+        measurement_precision: resolvePrecision || null,
+        measurement_length_type: resolveLengthType || null,
       }),
     })
       .then((res) => res.json())
-      .then(() => loadReadiness())
+      .then(() => {
+        loadReadiness();
+        setResolveFormKey(null);
+      })
       .catch((err) => console.error("Couldn't resolve field:", err))
       .finally(() => setResolvingKey(null));
   };
@@ -1545,27 +1574,107 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
           {Object.entries(grouped).map(([category, catItems]) => (
             <Card key={category}>
               <div className="px-5 py-3.5 border-b border-[#F8FAFC] flex items-center justify-between bg-[#FAFBFD]">
-                <h3 className="text-sm font-semibold text-[#0F172A] capitalize">{category}</h3>
+                <h3 className="text-sm font-semibold text-[#0F172A] capitalize">{category.replace(/_/g, " ")}</h3>
                 <span className="font-mono text-[11px] text-[#94A3B8]">
                   {catItems.filter((i) => i.status === "complete").length}/{catItems.length} complete
                 </span>
               </div>
               <div className="divide-y divide-[#F8FAFC]">
                 {catItems.map((item) => (
-                  <div key={item.field} className={`px-5 py-3 flex items-center gap-4 ${item.status === "missing" ? "bg-red-50/40" : item.status === "pending" ? "bg-amber-50/30" : ""}`}>
-                    <div className="w-5 text-center text-sm shrink-0">{iconFor(item.status)}</div>
-                    <div className="flex-1">
-                      <p className="text-sm text-[#0F172A] font-medium">{item.field}</p>
+                  <div key={item.field} className={`px-5 py-3 ${item.status === "missing" ? "bg-red-50/40" : item.status === "pending" ? "bg-amber-50/30" : ""}`}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-5 text-center text-sm shrink-0">{iconFor(item.status)}</div>
+                      <div className="flex-1">
+                        <p className="text-sm text-[#0F172A] font-medium">{item.field}</p>
+                      </div>
+                      <StatusBadge status={item.status as any} />
+                      {item.status !== "complete" && resolveFormKey !== item.key && (
+                        <button
+                          onClick={() => openResolveForm(item.key)}
+                          className="text-xs text-[#0EA5E9] hover:underline shrink-0"
+                        >
+                          Resolve
+                        </button>
+                      )}
                     </div>
-                    <StatusBadge status={item.status as any} />
-                    {item.status !== "complete" && (
-                      <button
-                        onClick={() => handleResolve(item.key)}
-                        disabled={resolvingKey === item.key}
-                        className="text-xs text-[#0EA5E9] hover:underline shrink-0 disabled:opacity-50 disabled:no-underline"
-                      >
-                        {resolvingKey === item.key ? "Resolving…" : "Resolve"}
-                      </button>
+
+                    {resolveFormKey === item.key && (
+                      <div className="mt-3 ml-9 space-y-2 max-w-md">
+                        <textarea
+                          autoFocus
+                          value={resolveValue}
+                          onChange={(e) => setResolveValue(e.target.value)}
+                          placeholder={
+                            item.category === "patient_support"
+                              ? "What was discussed, and when/how (e.g. in clinic, phone follow-up)…"
+                              : "Enter the finding…"
+                          }
+                          rows={3}
+                          className="w-full border border-[#D1D5DB] rounded px-2.5 py-2 text-xs focus:outline-none focus:border-[#0EA5E9] resize-none"
+                        />
+
+                        {/* Measurement standardization metadata — only for
+                            measurement-category fields, directly addressing
+                            the real critique that published tumor
+                            measurements rarely document who measured, how,
+                            or whether a basal diameter is a chord- or
+                            arc-length. */}
+                        {item.category === "measurement" && (
+                          <div className="grid grid-cols-3 gap-2">
+                            <select
+                              value={resolveMethod}
+                              onChange={(e) => setResolveMethod(e.target.value)}
+                              className="border border-[#D1D5DB] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                            >
+                              <option value="">Method…</option>
+                              <option value="Indirect ophthalmoscopy / fundus exam">Ophthalmoscopy</option>
+                              <option value="B-scan ultrasonography">B-scan ultrasound</option>
+                              <option value="Fundus photography">Fundus photography</option>
+                              <option value="Optical coherence tomography">OCT</option>
+                              <option value="MRI">MRI</option>
+                              <option value="CT">CT</option>
+                              <option value="Other">Other</option>
+                            </select>
+                            <select
+                              value={resolvePrecision}
+                              onChange={(e) => setResolvePrecision(e.target.value)}
+                              className="border border-[#D1D5DB] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                            >
+                              <option value="">Precision…</option>
+                              <option value="Nearest 0.1 mm">Nearest 0.1 mm</option>
+                              <option value="Nearest 0.5 mm">Nearest 0.5 mm</option>
+                              <option value="Nearest 1 mm">Nearest 1 mm</option>
+                              <option value="Not specified">Not specified</option>
+                            </select>
+                            <select
+                              value={resolveLengthType}
+                              onChange={(e) => setResolveLengthType(e.target.value)}
+                              className="border border-[#D1D5DB] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                            >
+                              <option value="">Chord/Arc…</option>
+                              <option value="Chord length">Chord length</option>
+                              <option value="Arc length">Arc length</option>
+                              <option value="Not specified">Not specified</option>
+                            </select>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setResolveFormKey(null)}
+                            className="text-xs text-[#64748B] px-2.5 py-1.5 rounded hover:bg-[#F1F5F9] transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleResolveSubmit(item.key)}
+                            disabled={resolvingKey === item.key || !resolveValue.trim()}
+                            className="text-xs font-medium text-white bg-[#0EA5E9] px-3 py-1.5 rounded hover:bg-[#0284C7] transition-colors disabled:opacity-50"
+                          >
+                            {resolvingKey === item.key ? "Saving…" : "Save"}
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1617,7 +1726,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   // checklist so both the imaging table AND the measurements card below
   // can show real per-patient data instead of one hardcoded showcase case.
   const [checklist, setChecklist] = useState<
-    { key: string; field: string; category: string; status: string; value: string | null; source: string | null }[] | null
+    { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[] | null
   >(null);
 
   // Tracks which study is currently being ordered, so only that row's
@@ -1886,6 +1995,19 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
         {measurementItem?.value ? (
           <div>
             <p className="text-sm text-[#374151] leading-relaxed">{measurementItem.value}</p>
+            {(measurementItem.measurement_method || measurementItem.measurement_precision || measurementItem.measurement_length_type) && (
+              <div className="flex flex-wrap gap-3 mt-2">
+                {measurementItem.measurement_method && (
+                  <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded">Method: {measurementItem.measurement_method}</span>
+                )}
+                {measurementItem.measurement_precision && (
+                  <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded">Precision: {measurementItem.measurement_precision}</span>
+                )}
+                {measurementItem.measurement_length_type && (
+                  <span className="text-[10px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded">{measurementItem.measurement_length_type}</span>
+                )}
+              </div>
+            )}
             {measurementItem.source && (
               <p className="text-[10px] text-[#CBD5E1] mt-2">Source: {measurementItem.source}</p>
             )}
@@ -1930,7 +2052,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
   // genuinely generated from real data for whichever patient this is.
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[];
     missing_information: string[];
   } | null>(null);
   const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string; diagnosis: string | null; laterality: string | null } | null>(null);
@@ -2112,7 +2234,6 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                   { specialty: "Ophthalmology", provider: "Dr. Alicia M. Reyes, MD", role: "Presenting Physician" },
                   { specialty: "Radiation Oncology", provider: "Dr. Kevin S. Hartman, MD", role: "Treatment Planning" },
                   { specialty: "Radiation Physics", provider: "Dr. Priya N. Mehta, PhD", role: "Dosimetry" },
-                  { specialty: "Medical Oncology", provider: "Dr. Louis C. Brennan, MD", role: "Systemic Management" },
                 ].map((p) => (
                   <div key={p.specialty} className="border border-[#F1F5F9] rounded p-3">
                     <p className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider">{p.specialty}</p>
@@ -2121,6 +2242,9 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                   </div>
                 ))}
               </div>
+              <p className="text-[10px] text-[#94A3B8] italic mt-3">
+                Medical oncology and other specialists join as needed for higher-risk or metastatic cases.
+              </p>
             </Card>
 
             <Card className="p-4">
@@ -2129,12 +2253,11 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                 {[
                   { label: "Date", value: "November 14, 2024" },
                   { label: "Time", value: "2:00 PM EST" },
-                  { label: "Location", value: "Conference Room B" },
-                  { label: "Case #", value: "TB-2024-0047", mono: true },
+                  { label: "Format", value: "Video conference" },
                 ].map((d) => (
                   <div key={d.label} className="flex justify-between">
                     <span className="text-[#94A3B8]">{d.label}</span>
-                    <span className={`text-[#0F172A] font-medium ${(d as any).mono ? "font-mono" : ""}`}>{d.value}</span>
+                    <span className="text-[#0F172A] font-medium">{d.value}</span>
                   </div>
                 ))}
               </div>
