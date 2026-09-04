@@ -1293,6 +1293,10 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   const [resolveMethod, setResolveMethod] = useState("");
   const [resolvePrecision, setResolvePrecision] = useState("");
   const [resolveLengthType, setResolveLengthType] = useState("");
+  // Lets a status be reverted, not just moved forward — e.g. an item
+  // marked Complete by mistake, or new information means it genuinely
+  // needs redoing. Real clinical data isn't always a one-way ratchet.
+  const [resolveStatus, setResolveStatus] = useState("complete");
 
   // Real tasks tied to this case — what "Assign task" buttons now
   // actually create, instead of doing nothing.
@@ -1364,24 +1368,29 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   // This is the new piece: clicking "Resolve" actually writes to the
   // backend (POST), then re-fetches readiness so the percentage and
   // checklist update live — the first "write" action in the whole app.
-  const openResolveForm = (fieldKey: string) => {
+  const openResolveForm = (fieldKey: string, existing?: { value: string | null; status?: string; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }) => {
     setResolveFormKey(fieldKey);
-    setResolveValue("");
-    setResolveMethod("");
-    setResolvePrecision("");
-    setResolveLengthType("");
+    setResolveValue(existing?.value ?? "");
+    setResolveMethod(existing?.measurement_method ?? "");
+    setResolvePrecision(existing?.measurement_precision ?? "");
+    setResolveLengthType(existing?.measurement_length_type ?? "");
+    // Default to "complete" when resolving something missing for the
+    // first time; pre-fill the real current status when editing.
+    setResolveStatus(existing?.status && existing.status !== "missing" ? existing.status : "complete");
   };
 
   const handleResolveSubmit = (fieldKey: string) => {
-    if (!resolveValue.trim()) return;
+    // Marking something back to Missing is a deliberate correction, not
+    // a normal save — the value can reasonably be empty in that case.
+    if (resolveStatus !== "missing" && !resolveValue.trim()) return;
     setResolvingKey(fieldKey);
     apiFetch(`${API_BASE}/cases/${caseId}/values`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         field_key: fieldKey,
-        status: "complete",
-        value: resolveValue,
+        status: resolveStatus,
+        value: resolveStatus === "missing" ? null : resolveValue,
         source: "Dr. A. Reyes",
         measurement_method: resolveMethod || null,
         measurement_precision: resolvePrecision || null,
@@ -1604,30 +1613,45 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                         )}
                       </div>
                       <StatusBadge status={item.status as any} />
-                      {item.status !== "complete" && resolveFormKey !== item.key && (
+                      {resolveFormKey !== item.key && (
                         <button
-                          onClick={() => openResolveForm(item.key)}
+                          onClick={() => openResolveForm(item.key, item)}
                           className="text-xs text-[#0EA5E9] hover:underline shrink-0"
                         >
-                          Resolve
+                          {item.status === "complete" ? "Edit" : "Resolve"}
                         </button>
                       )}
                     </div>
 
                     {resolveFormKey === item.key && (
                       <div className="mt-3 ml-9 space-y-2 max-w-md">
-                        <textarea
-                          autoFocus
-                          value={resolveValue}
-                          onChange={(e) => setResolveValue(e.target.value)}
-                          placeholder={
-                            item.category === "patient_support"
-                              ? "What was discussed, and when/how (e.g. in clinic, phone follow-up)…"
-                              : "Enter the finding…"
-                          }
-                          rows={3}
-                          className="w-full border border-[#D1D5DB] rounded px-2.5 py-2 text-xs focus:outline-none focus:border-[#0EA5E9] resize-none"
-                        />
+                        <div>
+                          <label className="block text-[10px] text-[#94A3B8] mb-1">Status</label>
+                          <select
+                            value={resolveStatus}
+                            onChange={(e) => setResolveStatus(e.target.value)}
+                            className="border border-[#D1D5DB] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                          >
+                            <option value="complete">Complete</option>
+                            <option value="pending">Pending</option>
+                            <option value="missing">Missing (reset)</option>
+                          </select>
+                        </div>
+
+                        {resolveStatus !== "missing" && (
+                          <textarea
+                            autoFocus
+                            value={resolveValue}
+                            onChange={(e) => setResolveValue(e.target.value)}
+                            placeholder={
+                              item.category === "patient_support"
+                                ? "What was discussed, and when/how (e.g. in clinic, phone follow-up)…"
+                                : "Enter the finding…"
+                            }
+                            rows={3}
+                            className="w-full border border-[#D1D5DB] rounded px-2.5 py-2 text-xs focus:outline-none focus:border-[#0EA5E9] resize-none"
+                          />
+                        )}
 
                         {/* Measurement standardization metadata — only for
                             measurement-category fields, directly addressing
@@ -1635,7 +1659,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                             measurements rarely document who measured, how,
                             or whether a basal diameter is a chord- or
                             arc-length. */}
-                        {item.category === "measurement" && (
+                        {item.category === "measurement" && resolveStatus === "complete" && (
                           <div className="grid grid-cols-3 gap-2">
                             <select
                               value={resolveMethod}
@@ -1684,7 +1708,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                           </button>
                           <button
                             onClick={() => handleResolveSubmit(item.key)}
-                            disabled={resolvingKey === item.key || !resolveValue.trim()}
+                            disabled={resolvingKey === item.key || (resolveStatus !== "missing" && !resolveValue.trim())}
                             className="text-xs font-medium text-white bg-[#0EA5E9] px-3 py-1.5 rounded hover:bg-[#0284C7] transition-colors disabled:opacity-50"
                           >
                             {resolvingKey === item.key ? "Saving…" : "Save"}
