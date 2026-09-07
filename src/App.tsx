@@ -155,10 +155,10 @@ function AnimatedEyeIcon({ size = 16 }: { size?: number }) {
           style={{
             transformOrigin: "8px 8px",
             transformBox: "fill-box",
-            animation: "uvealcare-pupil-orbit 6s linear infinite",
+            animation: "uvealcare-pupil-orbit 3s linear infinite",
           }}
         >
-          <circle cx="8" cy="6.6" r="2" />
+          <circle cx="8" cy="5.3" r="1.6" />
         </g>
       </svg>
     </>
@@ -189,7 +189,7 @@ function Sidebar({ active, onNav, user }: { active: Screen; onNav: (s: Screen, c
   const roleLabel = user ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 
   return (
-    <aside className="w-56 shrink-0 bg-[#0F2D56] flex flex-col h-full">
+    <aside className="w-56 shrink-0 flex flex-col h-full" style={{ background: "linear-gradient(to right, #0F2D56, #0A0E14)" }}>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <div className="flex items-center gap-2.5">
@@ -303,6 +303,36 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 // ─── Screens ──────────────────────────────────────────────────────────────────
 
 // 1. LOGIN
+// A colorful rotating glow behind the login screen's eye badge — the
+// one deliberately bold moment in an otherwise restrained, monochrome
+// instrument-panel theme. A rotating conic-gradient blurred heavily
+// reads as a soft swirling multicolor ring, similar to the reference
+// image, without needing actual animated artwork.
+function LoginHeroGlow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: "7rem", height: "7rem" }}>
+      <style>{`
+        @keyframes uvealcare-orb-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: "7rem",
+          height: "7rem",
+          background: "conic-gradient(from 0deg, #ec4899, #f59e0b, #22d3ee, #6366f1, #ec4899)",
+          filter: "blur(22px)",
+          opacity: 0.65,
+          animation: "uvealcare-orb-spin 7s linear infinite",
+        }}
+      />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
+
 function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: string; role: string }) => void }) {
   const [email, setEmail] = useState("a.reyes@uvealcare.org");
   const [password, setPassword] = useState("");
@@ -369,14 +399,63 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0E14] flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex w-[480px] bg-[#0F2D56] flex-col justify-between p-12">
+    <div className="min-h-screen bg-[#0A0E14] flex relative overflow-hidden">
+      {/* Ambient background glare — soft, slow-drifting, low-opacity color
+          washes behind everything. Purely atmospheric: never sits above
+          any readable content, and stays subtle enough not to distract
+          from the actual sign-in task. */}
+      <style>{`
+        @keyframes uvealcare-glare-drift-a {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(40px, 30px) scale(1.15); }
+        }
+        @keyframes uvealcare-glare-drift-b {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-50px, -20px) scale(1.1); }
+        }
+      `}</style>
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "-10%", left: "-5%", width: "45%", height: "60%",
+          background: "radial-gradient(circle, #6366F1 0%, transparent 70%)",
+          filter: "blur(90px)", opacity: 0.18,
+          animation: "uvealcare-glare-drift-a 18s ease-in-out infinite",
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: "-15%", right: "5%", width: "50%", height: "55%",
+          background: "radial-gradient(circle, #EC4899 0%, transparent 70%)",
+          filter: "blur(100px)", opacity: 0.14,
+          animation: "uvealcare-glare-drift-b 22s ease-in-out infinite",
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "20%", right: "20%", width: "35%", height: "40%",
+          background: "radial-gradient(circle, #22D3EE 0%, transparent 70%)",
+          filter: "blur(80px)", opacity: 0.12,
+          animation: "uvealcare-glare-drift-a 25s ease-in-out infinite reverse",
+        }}
+      />
+
+      {/* Left panel — a gradient instead of a flat navy block, so the
+          panel visually dissolves into the page background at the seam
+          rather than meeting it as a hard, flat-color edge. */}
+      <div
+        className="hidden lg:flex w-[480px] flex-col justify-between p-12 relative z-10"
+        style={{ background: "linear-gradient(to right, #0F2D56, #0A0E14)" }}
+      >
         <div>
           <div className="flex items-center gap-3 mb-12">
-            <div className="w-9 h-9 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
-              <AnimatedEyeIcon size={16} />
-            </div>
+            <LoginHeroGlow>
+              <div className="w-16 h-16 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
+                <AnimatedEyeIcon size={32} />
+              </div>
+            </LoginHeroGlow>
             <div>
               <p className="text-white font-semibold text-lg tracking-tight">UvealCare</p>
               <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider">Clinical Workflow Platform</p>
@@ -419,7 +498,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 relative z-10">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
@@ -2774,7 +2853,7 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Patient-facing header */}
-      <div className="bg-[#0F2D56] px-8 py-5 shrink-0">
+      <div className="px-8 py-5 shrink-0" style={{ background: "linear-gradient(to bottom, #0F2D56, #0A0E14)" }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
