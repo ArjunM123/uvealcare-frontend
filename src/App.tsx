@@ -1406,6 +1406,24 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
       .finally(() => setResolvingKey(null));
   };
 
+  // Tracks which item is showing its "are you sure?" delete confirmation
+  // — same two-step pattern as Settings' Log Out, so a stray click can't
+  // accidentally destroy recorded clinical information.
+  const [confirmingDeleteKey, setConfirmingDeleteKey] = useState<string | null>(null);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+
+  const handleDeleteValue = (fieldKey: string) => {
+    setDeletingKey(fieldKey);
+    apiFetch(`${API_BASE}/cases/${caseId}/values/${fieldKey}`, { method: "DELETE" })
+      .then((res) => res.json())
+      .then(() => {
+        loadReadiness();
+        setConfirmingDeleteKey(null);
+      })
+      .catch((err) => console.error("Couldn't delete value:", err))
+      .finally(() => setDeletingKey(null));
+  };
+
   const iconFor = (s: string) => {
     if (s === "complete") return <span className="text-emerald-600 font-bold">✓</span>;
     if (s === "missing") return <span className="text-red-500 font-bold">✕</span>;
@@ -1613,13 +1631,43 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                         )}
                       </div>
                       <StatusBadge status={item.status as any} />
-                      {resolveFormKey !== item.key && (
+                      {resolveFormKey !== item.key && confirmingDeleteKey !== item.key && (
                         <button
                           onClick={() => openResolveForm(item.key, item)}
                           className="text-xs text-[#0EA5E9] hover:underline shrink-0"
                         >
                           {item.status === "complete" ? "Edit" : "Resolve"}
                         </button>
+                      )}
+                      {/* Direct delete — a quicker path than Edit for
+                          genuinely removing bad or mistaken data, rather
+                          than correcting it. Only shown when there's
+                          actually something recorded to delete. */}
+                      {item.status !== "missing" && resolveFormKey !== item.key && confirmingDeleteKey !== item.key && (
+                        <button
+                          onClick={() => setConfirmingDeleteKey(item.key)}
+                          className="text-xs text-red-500 hover:underline shrink-0"
+                        >
+                          Delete
+                        </button>
+                      )}
+                      {confirmingDeleteKey === item.key && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-[#374151]">Delete this?</span>
+                          <button
+                            onClick={() => handleDeleteValue(item.key)}
+                            disabled={deletingKey === item.key}
+                            className="text-xs font-medium text-white bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >
+                            {deletingKey === item.key ? "…" : "Yes, delete"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmingDeleteKey(null)}
+                            className="text-xs text-[#64748B] hover:text-[#374151]"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -1833,6 +1881,24 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
     reader.readAsDataURL(file);
   };
 
+  // Removes an uploaded image outright — previously the only option was
+  // to overwrite it with a new file, with no way to just remove a wrong
+  // or unwanted one.
+  const [confirmingImageDeleteKey, setConfirmingImageDeleteKey] = useState<string | null>(null);
+  const [deletingImageKey, setDeletingImageKey] = useState<string | null>(null);
+
+  const handleDeleteImage = (fieldKey: string) => {
+    setDeletingImageKey(fieldKey);
+    apiFetch(`${API_BASE}/cases/${caseId}/images/${fieldKey}`, { method: "DELETE" })
+      .then((res) => res.json())
+      .then(() => {
+        loadImageList();
+        setConfirmingImageDeleteKey(null);
+      })
+      .catch((err) => console.error("Couldn't delete image:", err))
+      .finally(() => setDeletingImageKey(null));
+  };
+
   const loadImaging = () => {
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
       .then((res) => res.json())
@@ -1991,6 +2057,32 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                       }}
                     />
                   </label>
+                  {hasImage && confirmingImageDeleteKey !== s.key && (
+                    <button
+                      onClick={() => setConfirmingImageDeleteKey(s.key)}
+                      className="block mt-0.5 text-[10px] text-red-500 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  )}
+                  {confirmingImageDeleteKey === s.key && (
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="text-[10px] text-[#374151]">Sure?</span>
+                      <button
+                        onClick={() => handleDeleteImage(s.key)}
+                        disabled={deletingImageKey === s.key}
+                        className="text-[10px] font-medium text-white bg-red-600 px-1.5 py-0.5 rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                      >
+                        {deletingImageKey === s.key ? "…" : "Yes"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmingImageDeleteKey(null)}
+                        className="text-[10px] text-[#64748B] hover:text-[#374151]"
+                      >
+                        No
+                      </button>
+                    </div>
+                  )}
                 </td>
                 <td className="px-5 py-3.5">
                   <p className={`text-xs ${s.source ? "text-[#374151]" : "text-[#CBD5E1]"}`}>{s.source ?? "Not assigned"}</p>
