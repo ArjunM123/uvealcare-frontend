@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Screen =
@@ -296,7 +296,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[10px] font-semibold text-[#69758A] uppercase tracking-widest mb-3">{children}</h3>
+    <h3 className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-widest mb-3">{children}</h3>
   );
 }
 
@@ -560,7 +560,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
                 onKeyDown={(e) => e.key === "Enter" && (isSignUp ? handleSignUp() : handleSignIn())}
                 className="w-full border border-[#2E3742] rounded px-3 py-2.5 text-sm text-[#E7ECF2] bg-[#12161D] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
               />
-              {isSignUp && <p className="text-[10px] text-[#69758A] mt-1">At least 8 characters.</p>}
+              {isSignUp && <p className="text-[10px] text-[#8291A3] mt-1">At least 8 characters.</p>}
             </div>
 
             {error && (
@@ -584,13 +584,13 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
           </div>
 
           <div className="mt-6 pt-6 border-t border-[#232A34]">
-            <p className="text-[10px] text-[#69758A] text-center leading-relaxed">
+            <p className="text-[10px] text-[#8291A3] text-center leading-relaxed">
               This system is for authorized healthcare personnel only.<br />
               Unauthorized access is prohibited and may be prosecuted.
             </p>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-4 text-[10px] text-[#69758A]">
+          <div className="mt-6 flex items-center justify-center gap-4 text-[10px] text-[#8291A3]">
             <span>HL7 FHIR</span>
           </div>
         </div>
@@ -758,7 +758,7 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
                     <option key={p.key} value={p.key}>{p.display_name} ({p.field_count} fields)</option>
                   ))}
                 </select>
-                <p className="text-[10px] text-[#69758A] mt-1">Determines which fields and stages this case will track.</p>
+                <p className="text-[10px] text-[#8291A3] mt-1">Determines which fields and stages this case will track.</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-[#C3CCD6] mb-1">MRN *</label>
@@ -856,7 +856,7 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
               <thead>
                 <tr className="border-b border-[#161B22]">
                   {["Patient", "MRN", "Diagnosis", "Stage", "Case Readiness", "Tasks", ""].map((h) => (
-                    <th key={h} className="px-5 py-2.5 text-left text-[10px] font-semibold text-[#69758A] uppercase tracking-wider">
+                    <th key={h} className="px-5 py-2.5 text-left text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">
                       {h}
                     </th>
                   ))}
@@ -887,7 +887,7 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
                     <td className="px-5 py-3">
                       {/* Per-patient task counts aren't tracked in the backend
                           yet — showing a dash is honest, not a fake number. */}
-                      <span className="text-[#454E59] text-xs">—</span>
+                      <span className="text-[#7C8794] text-xs">—</span>
                     </td>
                     <td className="px-5 py-3">
                       <ChevronRightIcon />
@@ -906,14 +906,14 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
               </div>
               <div className="divide-y divide-[#0A0E14]">
                 {tasks.length === 0 && (
-                  <p className="px-4 py-3 text-xs text-[#69758A] italic">No open tasks assigned yet.</p>
+                  <p className="px-4 py-3 text-xs text-[#8291A3] italic">No open tasks assigned yet.</p>
                 )}
                 {tasks.map((t) => (
                   <div key={t.id} className="px-4 py-3 flex items-start gap-3">
                     <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-amber-400" />
                     <div className="flex-1 min-w-0">
                       <p className="text-[#E7ECF2] text-xs font-medium truncate">{t.description}</p>
-                      <p className="text-[#69758A] text-[10px]">
+                      <p className="text-[#8291A3] text-[10px]">
                         {t.patient_name}{t.assignee_name ? ` → ${t.assignee_name}` : ""}{t.due_date ? ` · Due ${t.due_date}` : ""}
                       </p>
                     </div>
@@ -928,7 +928,7 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
                 <p className="text-[#E7ECF2] text-sm font-semibold">Thursday, Nov 14, 2024</p>
                 <p className="text-[#8B96A3] text-xs">2:00 PM — Video conference</p>
                 <div className="pt-2 border-t border-[#161B22]">
-                  <p className="text-[10px] text-[#69758A] mb-1.5">Cases Scheduled</p>
+                  <p className="text-[10px] text-[#8291A3] mb-1.5">Cases Scheduled</p>
                   <p className="text-[#E7ECF2] text-xs font-medium">Sullivan, M. — Choroidal OD</p>
                   <p className="text-[#E7ECF2] text-xs font-medium">Kowalski, D. — Choroidal OD</p>
                   <p className="text-[#E7ECF2] text-xs font-medium">Hargrove, R. — Ciliary Body OS</p>
@@ -1070,7 +1070,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
               <div key={stage} className="flex items-center">
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-all ${
                   isActive ? "bg-[#0F2D56] text-white" :
-                  isDone ? "text-emerald-400" : "text-[#454E59]"
+                  isDone ? "text-emerald-400" : "text-[#7C8794]"
                 }`}>
                   {isDone && (
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1136,15 +1136,15 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     { label: "Referring Provider", value: caseInfo?.referring_provider ?? "Not recorded" },
                   ].map((r) => (
                     <div key={r.label} className="flex justify-between items-start gap-4">
-                      <span className="text-[#69758A] text-xs shrink-0">{r.label}</span>
-                      <span className={`text-xs text-right ${r.mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#454E59] italic" : "text-[#E7ECF2]"}`}>{r.value}</span>
+                      <span className="text-[#8291A3] text-xs shrink-0">{r.label}</span>
+                      <span className={`text-xs text-right ${r.mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#7C8794] italic" : "text-[#E7ECF2]"}`}>{r.value}</span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[10px] text-[#69758A] mb-1">Sex</label>
+                    <label className="block text-[10px] text-[#8291A3] mb-1">Sex</label>
                     <select
                       value={editForm.sex}
                       onChange={(e) => setEditForm({ ...editForm, sex: e.target.value })}
@@ -1163,7 +1163,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     { key: "referring_provider", label: "Referring Provider", placeholder: "Dr. J. Thornton" },
                   ].map((f) => (
                     <div key={f.key}>
-                      <label className="block text-[10px] text-[#69758A] mb-1">{f.label}</label>
+                      <label className="block text-[10px] text-[#8291A3] mb-1">{f.label}</label>
                       <input
                         value={(editForm as any)[f.key]}
                         onChange={(e) => setEditForm({ ...editForm, [f.key]: e.target.value })}
@@ -1210,8 +1210,8 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     { label: "Tumor Location", value: fieldValue("tumor_location") ?? "Not recorded" },
                   ].map((r) => (
                     <div key={r.label} className="flex justify-between items-start gap-4">
-                      <span className="text-[#69758A] text-xs shrink-0">{r.label}</span>
-                      <span className={`text-xs text-right ${(r as any).mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#454E59] italic" : "text-[#E7ECF2]"}`}>{r.value}</span>
+                      <span className="text-[#8291A3] text-xs shrink-0">{r.label}</span>
+                      <span className={`text-xs text-right ${(r as any).mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#7C8794] italic" : "text-[#E7ECF2]"}`}>{r.value}</span>
                     </div>
                   ))}
                 </div>
@@ -1222,7 +1222,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                 {fieldValue("tumor_dimensions") ? (
                   <p className="text-sm text-[#C3CCD6] leading-relaxed">{fieldValue("tumor_dimensions")}</p>
                 ) : (
-                  <p className="text-xs text-[#454E59] italic">
+                  <p className="text-xs text-[#7C8794] italic">
                     Not yet recorded for this patient. Overall status is tracked on the Case Readiness page.
                   </p>
                 )}
@@ -1255,7 +1255,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     </div>
                   ))}
                   {readinessSummary && readinessSummary.missing_information.length === 0 && (
-                    <p className="text-xs text-[#69758A] italic">Nothing missing</p>
+                    <p className="text-xs text-[#8291A3] italic">Nothing missing</p>
                   )}
                 </div>
                 <button
@@ -1272,7 +1272,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                 {fieldValue("clinical_assessment") ? (
                   <p className="text-sm text-[#C3CCD6] leading-relaxed">{fieldValue("clinical_assessment")}</p>
                 ) : (
-                  <p className="text-xs text-[#454E59] italic">
+                  <p className="text-xs text-[#7C8794] italic">
                     Not yet recorded for this patient.
                   </p>
                 )}
@@ -1286,14 +1286,14 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     <div className="w-1.5 h-1.5 rounded-full bg-[#0EA5E9]" />
                     <div>
                       <p className="text-xs font-medium text-[#E7ECF2]">Tumor Board</p>
-                      <p className="text-[10px] text-[#69758A]">Nov 14, 2024 · 2:00 PM</p>
+                      <p className="text-[10px] text-[#8291A3]">Nov 14, 2024 · 2:00 PM</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#69758A]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#8291A3]" />
                     <div>
                       <p className="text-xs font-medium text-[#E7ECF2]">FAF Imaging</p>
-                      <p className="text-[10px] text-[#69758A]">Nov 08, 2024 · Ocular Imaging</p>
+                      <p className="text-[10px] text-[#8291A3]">Nov 08, 2024 · Ocular Imaging</p>
                     </div>
                   </div>
                 </div>
@@ -1309,13 +1309,13 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
         {activeTab === "molecular" && (
           <Card className="p-6 max-w-2xl">
             <SectionHeader>Molecular Testing</SectionHeader>
-            <p className="text-[10px] text-[#69758A] italic mb-3">
+            <p className="text-[10px] text-[#8291A3] italic mb-3">
               For uveal melanoma, molecular testing (e.g. GEP) is used for metastatic risk stratification and surveillance planning — not for diagnosis, which remains clinical.
             </p>
             {(() => {
               const molecularItems = readinessSummary?.checklist.filter((c) => c.category === "molecular") ?? [];
-              if (!readinessSummary) return <p className="text-xs text-[#69758A]">Loading…</p>;
-              if (molecularItems.length === 0) return <p className="text-xs text-[#69758A] italic">No molecular testing configured for this disease profile.</p>;
+              if (!readinessSummary) return <p className="text-xs text-[#8291A3]">Loading…</p>;
+              if (molecularItems.length === 0) return <p className="text-xs text-[#8291A3] italic">No molecular testing configured for this disease profile.</p>;
               return (
                 <div className="space-y-4">
                   {molecularItems.map((item) => (
@@ -1359,7 +1359,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                   <div className={`w-2 h-2 rounded-full shrink-0 ${t.priority === "high" ? "bg-red-500" : "bg-amber-400"}`} />
                   <div className="flex-1">
                     <p className="text-sm text-[#E7ECF2] font-medium">{t.task}</p>
-                    <p className="text-[11px] text-[#69758A]">{t.assignee} · Due {t.due}</p>
+                    <p className="text-[11px] text-[#8291A3]">{t.assignee} · Due {t.due}</p>
                   </div>
                   <span className="text-[10px] font-medium text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded">
                     {t.priority}
@@ -1542,7 +1542,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   if (!readinessData) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[#0A0E14]">
-        <p className="text-[#69758A] text-sm">Loading case readiness…</p>
+        <p className="text-[#8291A3] text-sm">Loading case readiness…</p>
       </div>
     );
   }
@@ -1607,7 +1607,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
               <div className="h-3 bg-[#161B22] rounded-full overflow-hidden mb-2">
                 <div className="h-full bg-amber-500 rounded-full" style={{ width: `${readiness}%` }} />
               </div>
-              <div className="flex justify-between text-[10px] text-[#69758A]">
+              <div className="flex justify-between text-[10px] text-[#8291A3]">
                 <span>{complete} complete</span>
                 <span>{allItems.length} total</span>
               </div>
@@ -1619,7 +1619,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
             <p className="text-xs font-semibold text-[#C3CCD6] mb-3">Missing or Pending Information</p>
             <div className="grid grid-cols-2 gap-3">
               {readinessData.missing_information.length === 0 && (
-                <p className="text-xs text-[#69758A] italic">Nothing missing — case is fully documented.</p>
+                <p className="text-xs text-[#8291A3] italic">Nothing missing — case is fully documented.</p>
               )}
               {readinessData.missing_information.map((label) => {
                 const existingTask = tasks.find((t) => t.description === `Resolve: ${label}` && t.status === "open");
@@ -1685,8 +1685,8 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                 <div key={task.id} className="px-5 py-3 flex items-center gap-4">
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${task.status === "done" ? "bg-emerald-400" : "bg-amber-400"}`} />
                   <div className="flex-1">
-                    <p className={`text-sm font-medium ${task.status === "done" ? "text-[#69758A] line-through" : "text-[#E7ECF2]"}`}>{task.description}</p>
-                    <p className="text-[11px] text-[#69758A]">
+                    <p className={`text-sm font-medium ${task.status === "done" ? "text-[#8291A3] line-through" : "text-[#E7ECF2]"}`}>{task.description}</p>
+                    <p className="text-[11px] text-[#8291A3]">
                       {task.assignee_name ?? "Unassigned"}{task.due_date ? ` · Due ${task.due_date}` : ""}
                     </p>
                   </div>
@@ -1711,7 +1711,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
             <Card key={category}>
               <div className="px-5 py-3.5 border-b border-[#0A0E14] flex items-center justify-between bg-[#12161D]">
                 <h3 className="text-sm font-semibold text-[#E7ECF2] capitalize">{category.replace(/_/g, " ")}</h3>
-                <span className="font-mono text-[11px] text-[#69758A]">
+                <span className="font-mono text-[11px] text-[#8291A3]">
                   {catItems.filter((i) => i.status === "complete").length}/{catItems.length} complete
                 </span>
               </div>
@@ -1783,7 +1783,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                     {resolveFormKey === item.key && (
                       <div className="mt-3 ml-9 space-y-2 max-w-md">
                         <div>
-                          <label className="block text-[10px] text-[#69758A] mb-1">Status</label>
+                          <label className="block text-[10px] text-[#8291A3] mb-1">Status</label>
                           <select
                             value={resolveStatus}
                             onChange={(e) => setResolveStatus(e.target.value)}
@@ -2093,7 +2093,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   };
 
   if (!imagingItems) {
-    return <p className="text-[#69758A] text-sm">Loading imaging studies…</p>;
+    return <p className="text-[#8291A3] text-sm">Loading imaging studies…</p>;
   }
 
   const completeCount = imagingItems.filter((s) => s.status === "complete").length;
@@ -2126,7 +2126,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
           <thead>
             <tr className="border-b border-[#161B22] bg-[#12161D]">
               {["Study", "Status", "Image", "Source / Technician", "Findings", ""].map((h) => (
-                <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-[#69758A] uppercase tracking-wider">{h}</th>
+                <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
@@ -2150,7 +2150,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                       className="w-16 h-16 object-cover rounded border border-[#232A34]"
                     />
                   ) : (
-                    <span className="text-[10px] text-[#454E59] italic">No image</span>
+                    <span className="text-[10px] text-[#7C8794] italic">No image</span>
                   )}
                   <label className="block mt-1 text-[10px] text-[#0EA5E9] hover:underline cursor-pointer">
                     {uploadingKey === s.key ? "Uploading…" : hasImage ? "Replace" : "Upload"}
@@ -2194,7 +2194,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                   )}
                 </td>
                 <td className="px-5 py-3.5">
-                  <p className={`text-xs ${s.source ? "text-[#C3CCD6]" : "text-[#454E59]"}`}>{s.source ?? "Not assigned"}</p>
+                  <p className={`text-xs ${s.source ? "text-[#C3CCD6]" : "text-[#7C8794]"}`}>{s.source ?? "Not assigned"}</p>
                 </td>
                 <td className="px-5 py-3.5 max-w-xs">
                   <p className={`text-xs leading-relaxed ${s.status === "missing" ? "text-red-400 italic" : s.status === "pending" ? "text-amber-400 italic" : "text-[#C3CCD6]"}`}>
@@ -2219,7 +2219,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                       {orderingKey === s.key ? "Saving…" : "Mark Result Received"}
                     </button>
                   ) : (
-                    <span className="text-xs text-[#454E59]">—</span>
+                    <span className="text-xs text-[#7C8794]">—</span>
                   )}
                 </td>
               </tr>
@@ -2250,11 +2250,11 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
               </div>
             )}
             {measurementItem.source && (
-              <p className="text-[10px] text-[#454E59] mt-2">Source: {measurementItem.source}</p>
+              <p className="text-[10px] text-[#7C8794] mt-2">Source: {measurementItem.source}</p>
             )}
           </div>
         ) : (
-          <p className="text-xs text-[#454E59] italic">
+          <p className="text-xs text-[#7C8794] italic">
             Not yet recorded for this patient — see the "Tumor measurements" status on the Case Readiness page.
           </p>
         )}
@@ -2348,13 +2348,13 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-xl font-semibold text-[#E7ECF2]">{caseInfo ? caseInfo.patient : "Loading…"}</h2>
-                  <p className="font-mono text-xs text-[#69758A] mt-0.5">
+                  <p className="font-mono text-xs text-[#8291A3] mt-0.5">
                     {caseInfo ? caseInfo.mrn : ""}
                   </p>
                 </div>
                 <div className="text-right">
                   <StatusBadge status="warning" />
-                  <p className="text-[10px] text-[#69758A] mt-1">
+                  <p className="text-[10px] text-[#8291A3] mt-1">
                     Readiness: {readinessPct !== null ? `${readinessPct}%` : "…"}
                   </p>
                 </div>
@@ -2369,8 +2369,8 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                   { label: "Primary Provider", value: "Dr. A. Reyes" },
                 ].map((f) => (
                   <div key={f.label}>
-                    <p className="text-[10px] text-[#69758A] uppercase tracking-wider mb-0.5">{f.label}</p>
-                    <p className={`text-sm font-medium ${f.value === "Not recorded" ? "text-[#454E59] italic" : "text-[#E7ECF2]"}`}>{f.value}</p>
+                    <p className="text-[10px] text-[#8291A3] uppercase tracking-wider mb-0.5">{f.label}</p>
+                    <p className={`text-sm font-medium ${f.value === "Not recorded" ? "text-[#7C8794] italic" : "text-[#E7ECF2]"}`}>{f.value}</p>
                   </div>
                 ))}
               </div>
@@ -2383,19 +2383,19 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                 <div className="space-y-2.5">
                   {fieldValue("tumor_location") && (
                     <div className="flex justify-between border-b border-[#0A0E14] pb-2">
-                      <span className="text-xs text-[#69758A] shrink-0 mr-4">Location</span>
+                      <span className="text-xs text-[#8291A3] shrink-0 mr-4">Location</span>
                       <span className="text-xs font-medium text-[#E7ECF2] text-right">{fieldValue("tumor_location")}</span>
                     </div>
                   )}
                   {fieldValue("tumor_dimensions") && (
                     <div className="flex justify-between">
-                      <span className="text-xs text-[#69758A] shrink-0 mr-4">Measurements</span>
+                      <span className="text-xs text-[#8291A3] shrink-0 mr-4">Measurements</span>
                       <span className="text-xs font-medium text-[#E7ECF2] text-right">{fieldValue("tumor_dimensions")}</span>
                     </div>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-[#454E59] italic">Not yet recorded for this patient.</p>
+                <p className="text-xs text-[#7C8794] italic">Not yet recorded for this patient.</p>
               )}
             </Card>
 
@@ -2415,7 +2415,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-[#69758A]">Loading…</p>
+                <p className="text-xs text-[#8291A3]">Loading…</p>
               )}
             </Card>
 
@@ -2425,7 +2425,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
               <SectionHeader>Molecular & Genetic Testing</SectionHeader>
               {(() => {
                 const molecularItems = readinessData?.checklist.filter((c) => c.category === "molecular") ?? [];
-                if (molecularItems.length === 0) return <p className="text-xs text-[#69758A] italic">No molecular testing configured for this disease profile.</p>;
+                if (molecularItems.length === 0) return <p className="text-xs text-[#8291A3] italic">No molecular testing configured for this disease profile.</p>;
                 return (
                   <div className="space-y-2.5">
                     {molecularItems.map((item) => (
@@ -2477,13 +2477,13 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                   { specialty: "Radiation Physics", provider: "Dr. Priya N. Mehta, PhD", role: "Dosimetry" },
                 ].map((p) => (
                   <div key={p.specialty} className="border border-[#161B22] rounded p-3">
-                    <p className="text-[10px] font-semibold text-[#69758A] uppercase tracking-wider">{p.specialty}</p>
+                    <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">{p.specialty}</p>
                     <p className="text-xs font-medium text-[#E7ECF2] mt-0.5">{p.provider}</p>
-                    <p className="text-[10px] text-[#69758A]">{p.role}</p>
+                    <p className="text-[10px] text-[#8291A3]">{p.role}</p>
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-[#69758A] italic mt-3">
+              <p className="text-[10px] text-[#8291A3] italic mt-3">
                 Medical oncology and other specialists join as needed for higher-risk or metastatic cases.
               </p>
             </Card>
@@ -2497,7 +2497,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                   { label: "Format", value: "Video conference" },
                 ].map((d) => (
                   <div key={d.label} className="flex justify-between">
-                    <span className="text-[#69758A]">{d.label}</span>
+                    <span className="text-[#8291A3]">{d.label}</span>
                     <span className="text-[#E7ECF2] font-medium">{d.value}</span>
                   </div>
                 ))}
@@ -2506,7 +2506,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
 
             <Card className="p-4">
               <SectionHeader>Previous Treatment</SectionHeader>
-              <p className="text-xs text-[#69758A] italic">No prior treatment recorded for this diagnosis.</p>
+              <p className="text-xs text-[#8291A3] italic">No prior treatment recorded for this diagnosis.</p>
             </Card>
 
             <button
@@ -2612,7 +2612,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                 { label: "Surveillance Protocol", value: surveillanceProtocol },
               ].map((f) => (
                 <div key={f.label} className="border-b border-[#0A0E14] pb-3 last:border-0">
-                  <p className="text-[10px] font-semibold text-[#69758A] uppercase tracking-wider mb-1">{f.label}</p>
+                  <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">{f.label}</p>
                   <p className="text-sm text-[#E7ECF2]">{f.value}</p>
                 </div>
               ))}
@@ -2660,7 +2660,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                   "Other / custom",
                 ].map((opt) => (
                   <label key={opt} className="flex items-center gap-3 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${recommendation === opt ? "border-[#0F2D56] bg-[#0F2D56]" : "border-[#454E59] group-hover:border-[#69758A]"}`}>
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${recommendation === opt ? "border-[#0F2D56] bg-[#0F2D56]" : "border-[#7C8794] group-hover:border-[#8291A3]"}`}>
                       {recommendation === opt && <div className="w-1.5 h-1.5 rounded-full bg-[#12161D]" />}
                     </div>
                     <span className="text-sm text-[#C3CCD6]">{opt}</span>
@@ -2737,7 +2737,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                       <div className="w-1.5 h-1.5 rounded-full bg-[#0EA5E9] shrink-0" />
                       <div className="flex-1 text-xs">
                         <span className="text-[#C3CCD6]">{t.task}</span>
-                        <span className="text-[#69758A]"> → {t.assignee}</span>
+                        <span className="text-[#8291A3]"> → {t.assignee}</span>
                       </div>
                     </div>
                   ))}
@@ -2773,7 +2773,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                   { label: "GEP", value: "Pending" },
                 ].map((f) => (
                   <div key={f.label} className="flex justify-between border-b border-[#0A0E14] pb-1.5">
-                    <span className="text-[#69758A]">{f.label}</span>
+                    <span className="text-[#8291A3]">{f.label}</span>
                     <span className={`text-[#E7ECF2] font-medium ${(f as any).mono ? "font-mono text-[10px]" : ""}`}>{f.value}</span>
                   </div>
                 ))}
@@ -2791,7 +2791,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                 ].map((p) => (
                   <div key={p.name} className="flex justify-between">
                     <span className="text-[#E7ECF2] font-medium">{p.name}</span>
-                    <span className="text-[#69758A]">{p.spec}</span>
+                    <span className="text-[#8291A3]">{p.spec}</span>
                   </div>
                 ))}
               </div>
@@ -2912,7 +2912,7 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
                       isDone ? "bg-emerald-500 border-emerald-500 text-white" :
                       isCurrent ? "bg-[#0F2D56] border-[#0F2D56] text-white" :
-                      "bg-[#12161D] border-[#232A34] text-[#454E59]"
+                      "bg-[#12161D] border-[#232A34] text-[#7C8794]"
                     }`}>
                       {isDone ? (
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -2939,7 +2939,7 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className={`font-semibold ${isCurrent ? "text-[#0F2D56]" : isDone ? "text-emerald-300" : "text-[#454E59]"}`}>
+                            <h3 className={`font-semibold ${isCurrent ? "text-[#0F2D56]" : isDone ? "text-emerald-300" : "text-[#7C8794]"}`}>
                               {isDone && "✓ "}{step.label}
                             </h3>
                             {isCurrent && (
@@ -2948,16 +2948,16 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
                               </span>
                             )}
                           </div>
-                          <p className={`text-xs mt-0.5 ${isDone ? "text-emerald-400" : isCurrent ? "text-[#0EA5E9]" : "text-[#454E59]"}`}>
+                          <p className={`text-xs mt-0.5 ${isDone ? "text-emerald-400" : isCurrent ? "text-[#0EA5E9]" : "text-[#7C8794]"}`}>
                             {step.date}
                           </p>
                         </div>
                       </div>
-                      <p className={`text-sm leading-relaxed ${isUpcoming ? "text-[#69758A]" : "text-[#C3CCD6]"}`}>
+                      <p className={`text-sm leading-relaxed ${isUpcoming ? "text-[#8291A3]" : "text-[#C3CCD6]"}`}>
                         {step.desc}
                       </p>
                       {!isUpcoming && (
-                        <p className={`text-xs leading-relaxed mt-2 pt-2 border-t ${isDone ? "border-emerald-500/30 text-emerald-400/70" : "border-[#161B22] text-[#69758A]"}`}>
+                        <p className={`text-xs leading-relaxed mt-2 pt-2 border-t ${isDone ? "border-emerald-500/30 text-emerald-400/70" : "border-[#161B22] text-[#8291A3]"}`}>
                           {step.detail}
                         </p>
                       )}
@@ -2971,7 +2971,7 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
           <div className="mt-8 p-5 bg-[#12161D] rounded-lg border border-[#232A34]">
             <p className="text-sm font-semibold text-[#E7ECF2] mb-1">Questions about your care?</p>
             <p className="text-sm text-[#8B96A3]">Contact Dr. Alicia Reyes' office at (617) 555-0100 or through your patient portal messaging.</p>
-            <p className="text-xs text-[#69758A] mt-2">This information is provided by your care team at UvealCare. All clinical decisions are made by your physicians.</p>
+            <p className="text-xs text-[#8291A3] mt-2">This information is provided by your care team at UvealCare. All clinical decisions are made by your physicians.</p>
           </div>
         </div>
       </div>
@@ -3013,7 +3013,7 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
                 { label: "Role", value: roleLabel || "—" },
               ].map((r) => (
                 <div key={r.label} className="flex justify-between items-start gap-4">
-                  <span className="text-[#69758A] text-xs shrink-0">{r.label}</span>
+                  <span className="text-[#8291A3] text-xs shrink-0">{r.label}</span>
                   <span className="text-[#E7ECF2] text-xs text-right">{r.value}</span>
                 </div>
               ))}
@@ -3050,23 +3050,23 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
           <Card className="p-5">
             <SectionHeader>Configured Disease Profiles</SectionHeader>
             {!profiles ? (
-              <p className="text-xs text-[#69758A]">Loading…</p>
+              <p className="text-xs text-[#8291A3]">Loading…</p>
             ) : profiles.length === 0 ? (
-              <p className="text-xs text-[#69758A] italic">No disease profiles configured yet.</p>
+              <p className="text-xs text-[#8291A3] italic">No disease profiles configured yet.</p>
             ) : (
               <div className="space-y-2">
                 {profiles.map((p) => (
                   <div key={p.key} className="flex items-center justify-between py-2 border-b border-[#0A0E14] last:border-0">
                     <div>
                       <p className="text-sm font-medium text-[#E7ECF2]">{p.display_name}</p>
-                      <p className="text-[10px] text-[#69758A] font-mono">{p.key}</p>
+                      <p className="text-[10px] text-[#8291A3] font-mono">{p.key}</p>
                     </div>
                     <span className="text-xs text-[#8B96A3]">{p.field_count} tracked fields</span>
                   </div>
                 ))}
               </div>
             )}
-            <p className="text-[10px] text-[#69758A] mt-3 italic">
+            <p className="text-[10px] text-[#8291A3] mt-3 italic">
               Adding a new disease means defining its fields here — not rewriting the app.
             </p>
           </Card>
@@ -3080,7 +3080,7 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
                 { label: "Environment", value: "Local development" },
               ].map((r) => (
                 <div key={r.label} className="flex justify-between items-center">
-                  <span className="text-[#69758A] text-xs">{r.label}</span>
+                  <span className="text-[#8291A3] text-xs">{r.label}</span>
                   <span className="font-mono text-xs text-[#E7ECF2]">{r.value}</span>
                 </div>
               ))}
@@ -3103,9 +3103,53 @@ export default function App() {
   // Falls back to Margaret's case if none has been selected yet.
   const [selectedCaseId, setSelectedCaseId] = useState<string>(MARGARET_CASE_ID);
 
+  // Real browser back/forward support. Before this, every screen change
+  // was just React state — the browser had no idea any of these screens
+  // existed, so pressing Back immediately left the site entirely (e.g.
+  // back to a search engine), even after navigating several screens deep.
+  //
+  // Now, every in-app navigation writes a genuine browser history entry.
+  // Pressing Back steps through the screens actually visited, one at a
+  // time — Case Readiness → Patient → Dashboard — and only leaves the
+  // site once you've gone back past the app's own starting point. That's
+  // the same behavior any normal website has; this app just never wrote
+  // to history before, so the browser had nothing to step through.
+  const SCREENS_NEEDING_CASE_ID: Screen[] = ["patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision"];
+  const ALL_SCREENS: Screen[] = ["dashboard", "patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision", "patient-pathway", "settings"];
+
+  const encodeHash = (s: Screen, caseId: string) =>
+    SCREENS_NEEDING_CASE_ID.includes(s) ? `#${s}/${caseId}` : `#${s}`;
+
+  // True for a brief moment right after the browser's own Back/Forward
+  // fires — this stops that reaction from itself writing ANOTHER history
+  // entry, which would otherwise make Back feel broken (stuck, or
+  // skipping screens) instead of stepping through cleanly one at a time.
+  const isPoppingRef = useRef(false);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const hash = window.location.hash.replace(/^#/, "");
+      if (!hash) return;
+      const [rawScreen, caseId] = hash.split("/");
+      if (ALL_SCREENS.includes(rawScreen as Screen)) {
+        isPoppingRef.current = true;
+        if (caseId) setSelectedCaseId(caseId);
+        setScreen(rawScreen as Screen);
+        setTimeout(() => { isPoppingRef.current = false; }, 0);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const handleNav = (s: Screen, caseId?: string) => {
+    const resolvedCaseId = caseId ?? selectedCaseId;
     if (caseId) setSelectedCaseId(caseId);
     setScreen(s);
+
+    if (!isPoppingRef.current) {
+      window.history.pushState(null, "", encodeHash(s, resolvedCaseId));
+    }
   };
 
   // A real logout: clears the signed-in user, clears the auth token so
@@ -3117,6 +3161,7 @@ export default function App() {
     authToken = null;
     setLoggedInUser(null);
     setScreen("login");
+    window.history.pushState(null, "", "#login");
   };
 
   if (screen === "login") {
@@ -3125,6 +3170,10 @@ export default function App() {
         onLogin={(user) => {
           setLoggedInUser(user);
           setScreen("dashboard");
+          // Dashboard needs its own real history entry too — otherwise
+          // it's the one screen Back would always skip straight past,
+          // since it was never reached through handleNav.
+          window.history.pushState(null, "", "#dashboard");
         }}
       />
     );
