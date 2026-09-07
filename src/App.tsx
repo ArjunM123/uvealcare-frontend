@@ -602,7 +602,11 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
 // 2. DASHBOARD
 
 // TEMP: paste the case ID that seed.py printed on your machine
-const MARGARET_CASE_ID = "a178cdd3-9bd9-499a-92c8-9f48313171e5";
+// (Removed: a hardcoded fallback case ID used to live here, left over
+// from local testing. It silently broke every time the hosted database
+// was reseeded, since that exact ID stopped existing — this is what
+// caused sidebar navigation to 404 and crash. Replaced by dynamically
+// loading a real, currently-existing case on login instead.)
 const API_BASE = "https://uvealcare-backend.onrender.com";
 
 // This is what the frontend does with the token the backend now requires:
@@ -971,7 +975,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
 
   const loadCaseInfo = () => {
     apiFetch(`${API_BASE}/cases/${caseId}`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         setCaseInfo(data);
         setEditForm({
@@ -1015,7 +1019,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
     loadCaseInfo();
 
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setReadinessSummary(data))
       .catch((err) => console.error("Couldn't reach backend:", err));
   }, [caseId]);
@@ -1313,7 +1317,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
               For uveal melanoma, molecular testing (e.g. GEP) is used for metastatic risk stratification and surveillance planning — not for diagnosis, which remains clinical.
             </p>
             {(() => {
-              const molecularItems = readinessSummary?.checklist.filter((c) => c.category === "molecular") ?? [];
+              const molecularItems = readinessSummary?.checklist?.filter((c) => c.category === "molecular") ?? [];
               if (!readinessSummary) return <p className="text-xs text-[#8291A3]">Loading…</p>;
               if (molecularItems.length === 0) return <p className="text-xs text-[#8291A3] italic">No molecular testing configured for this disease profile.</p>;
               return (
@@ -1428,14 +1432,14 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
 
   const loadReadiness = () => {
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setReadinessData(data))
       .catch((err) => console.error("Couldn't reach backend:", err));
   };
 
   useEffect(() => {
     apiFetch(`${API_BASE}/cases/${caseId}`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setCaseInfo(data))
       .catch((err) => console.error("Couldn't reach backend:", err));
     loadReadiness();
@@ -2010,7 +2014,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
 
   const loadImaging = () => {
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setChecklist(data.checklist))
       .catch((err) => console.error("Couldn't reach backend:", err));
   };
@@ -2268,7 +2272,7 @@ function ImagingScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
 
   useEffect(() => {
     apiFetch(`${API_BASE}/cases/${caseId}`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setCaseInfo(data))
       .catch((err) => console.error("Couldn't reach backend:", err));
   }, [caseId]);
@@ -2300,12 +2304,12 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
 
   useEffect(() => {
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setReadinessData(data))
       .catch((err) => console.error("Couldn't reach backend:", err));
 
     apiFetch(`${API_BASE}/cases/${caseId}`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setCaseInfo(data))
       .catch((err) => console.error("Couldn't reach backend:", err));
   }, [caseId]);
@@ -2315,7 +2319,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
     readinessData?.checklist.find((c) => c.key === key)?.value ?? null;
   const fieldStatus = (key: string): string =>
     readinessData?.checklist.find((c) => c.key === key)?.status ?? "missing";
-  const imagingItems = readinessData?.checklist.filter((c) => c.category === "imaging") ?? [];
+  const imagingItems = readinessData?.checklist?.filter((c) => c.category === "imaging") ?? [];
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -2424,7 +2428,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
             <Card className="p-5">
               <SectionHeader>Molecular & Genetic Testing</SectionHeader>
               {(() => {
-                const molecularItems = readinessData?.checklist.filter((c) => c.category === "molecular") ?? [];
+                const molecularItems = readinessData?.checklist?.filter((c) => c.category === "molecular") ?? [];
                 if (molecularItems.length === 0) return <p className="text-xs text-[#8291A3] italic">No molecular testing configured for this disease profile.</p>;
                 return (
                   <div className="space-y-2.5">
@@ -2452,7 +2456,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                 {fieldValue("tumor_location") ? ` ${fieldValue("tumor_location")}` : ""}
                 {fieldValue("tumor_dimensions") ? ` ${fieldValue("tumor_dimensions")}` : ""}
                 {(() => {
-                  const molecular = (readinessData?.checklist.filter((c) => c.category === "molecular" && c.value) ?? []);
+                  const molecular = (readinessData?.checklist?.filter((c) => c.category === "molecular" && c.value) ?? []);
                   return molecular.length > 0
                     ? ` Molecular testing: ${molecular.map((m) => m.value).join("; ")}.`
                     : " Molecular testing not yet available.";
@@ -2537,7 +2541,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
 
   useEffect(() => {
     apiFetch(`${API_BASE}/cases/${caseId}`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => setCaseInfo(data))
       .catch((err) => console.error("Couldn't reach backend:", err));
 
@@ -3097,11 +3101,30 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("login");
   const [loggedInUser, setLoggedInUser] = useState<{ name: string; email: string; role: string } | null>(null);
 
-  // This is the core fix: instead of every screen hardcoding Margaret's
-  // case, the app now remembers WHICH case was clicked on the dashboard,
-  // and passes that same ID to whichever screen you navigate to next.
-  // Falls back to Margaret's case if none has been selected yet.
-  const [selectedCaseId, setSelectedCaseId] = useState<string>(MARGARET_CASE_ID);
+  // Which case is "selected" when a screen is reached without a specific
+  // patient already chosen (e.g. clicking a sidebar tab like "Cases"
+  // before ever opening a patient from the Dashboard). This used to
+  // fall back to a hardcoded case ID left over from local testing —
+  // which silently broke the moment the hosted database was reseeded
+  // and that exact ID no longer existed, causing every such screen to
+  // 404 and crash. Now it starts empty and gets filled in with a real,
+  // currently-existing case the moment the app loads real data below.
+  const [selectedCaseId, setSelectedCaseId] = useState<string>("");
+
+  // The moment we're logged in, fetch the real case list once and use
+  // the first real case as the fallback — this is what replaces the old
+  // hardcoded ID with something that's guaranteed to actually exist.
+  useEffect(() => {
+    if (!loggedInUser || selectedCaseId) return;
+    apiFetch(`${API_BASE}/cases`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSelectedCaseId(data[0].case_id);
+        }
+      })
+      .catch((err) => console.error("Couldn't load a fallback case:", err));
+  }, [loggedInUser, selectedCaseId]);
 
   // Real browser back/forward support. Before this, every screen change
   // was just React state — the browser had no idea any of these screens
@@ -3209,11 +3232,21 @@ export default function App() {
       )}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {screen === "dashboard" && <DashboardScreen onNav={handleNav} />}
-        {screen === "patient" && <PatientScreen onNav={handleNav} caseId={selectedCaseId} />}
-        {screen === "case-readiness" && <CaseReadinessScreen onNav={handleNav} caseId={selectedCaseId} />}
-        {screen === "imaging" && <ImagingScreen onNav={handleNav} caseId={selectedCaseId} />}
-        {screen === "tumor-board" && <TumorBoardScreen onNav={handleNav} caseId={selectedCaseId} />}
-        {screen === "tumor-board-decision" && <TumorBoardDecisionScreen onNav={handleNav} caseId={selectedCaseId} />}
+        {selectedCaseId ? (
+          <>
+            {screen === "patient" && <PatientScreen onNav={handleNav} caseId={selectedCaseId} />}
+            {screen === "case-readiness" && <CaseReadinessScreen onNav={handleNav} caseId={selectedCaseId} />}
+            {screen === "imaging" && <ImagingScreen onNav={handleNav} caseId={selectedCaseId} />}
+            {screen === "tumor-board" && <TumorBoardScreen onNav={handleNav} caseId={selectedCaseId} />}
+            {screen === "tumor-board-decision" && <TumorBoardDecisionScreen onNav={handleNav} caseId={selectedCaseId} />}
+          </>
+        ) : (
+          ["patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision"].includes(screen) && (
+            <div className="flex-1 flex items-center justify-center bg-[#0A0E14]">
+              <p className="text-[#8291A3] text-sm">Loading a patient case…</p>
+            </div>
+          )
+        )}
         {screen === "patient-pathway" && <PatientPathwayScreen onNav={handleNav} />}
         {screen === "settings" && <SettingsScreen user={loggedInUser} onLogout={handleLogout} />}
       </div>
