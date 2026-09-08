@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Screen =
   | "login"
+  | "disease-select"
   | "dashboard"
   | "patient"
   | "case-readiness"
@@ -182,7 +183,7 @@ function getInitials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-function Sidebar({ active, onNav, user }: { active: Screen; onNav: (s: Screen, caseId?: string) => void; user: { name: string; email: string; role: string } | null }) {
+function Sidebar({ active, onNav, user, onSwitchWorkflow }: { active: Screen; onNav: (s: Screen, caseId?: string) => void; user: { name: string; email: string; role: string } | null; onSwitchWorkflow: () => void }) {
   // Computed from whoever actually logged in — "AR" for "Dr. Alicia M.
   // Reyes" — instead of a hardcoded initials badge.
   const initials = user ? getInitials(user.name) : "?";
@@ -190,8 +191,9 @@ function Sidebar({ active, onNav, user }: { active: Screen; onNav: (s: Screen, c
 
   return (
     <aside className="w-56 shrink-0 flex flex-col h-full" style={{ background: "linear-gradient(to right, #0F2D56, #0A0E14)" }}>
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/10">
+      {/* Logo — clickable, returns to the disease-select screen so you
+          can switch between the two separate workflows */}
+      <button onClick={onSwitchWorkflow} className="px-5 py-5 border-b border-white/10 text-left hover:bg-white/5 transition-colors">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded bg-[#0EA5E9] flex items-center justify-center">
             <EyeIcon size={14} />
@@ -199,7 +201,7 @@ function Sidebar({ active, onNav, user }: { active: Screen; onNav: (s: Screen, c
           <span className="text-white font-semibold text-[15px] tracking-tight">UvealCare</span>
         </div>
         <p className="text-white/40 text-[10px] mt-1 font-mono tracking-wider uppercase">Clinical Platform</p>
-      </div>
+      </button>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
@@ -627,23 +629,82 @@ function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
   });
 }
 
-function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => void }) {
+// The screen shown right after login — splits the app into two
+// genuinely separate sections sharing one account, rather than one
+// combined patient list mixing both diseases together. Real disease
+// profiles are fetched from the backend, same source of truth as
+// everywhere else — nothing about which diseases exist is hardcoded here.
+function DiseaseSelectScreen({ onSelect }: { onSelect: (diseaseKey: string) => void }) {
+  const [profiles, setProfiles] = useState<{ key: string; display_name: string; field_count: number }[]>([]);
+
+  useEffect(() => {
+    apiFetch(`${API_BASE}/disease-profiles`)
+      .then((res) => res.json())
+      .then((data) => setProfiles(data))
+      .catch((err) => console.error("Couldn't reach backend:", err));
+  }, []);
+
+  // Short, honest descriptions — not overstated. Sarcoma has at least
+  // one real named competitor (OncoLens, via a SARC partnership) already
+  // active in this space, so "underserved" is accurate; "no one else is
+  // doing this" would not be.
+  const blurbs: Record<string, string> = {
+    uveal_melanoma: "A rare ocular cancer (~1,500–2,000 US cases/year) with no dedicated clinical workflow tool on the market today.",
+    soft_tissue_sarcoma: "A rare cancer (~13,000 US cases/year), officially recognized by the NCI as an underserved area of oncology.",
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0A0E14] flex items-center justify-center p-8">
+      <div className="w-full max-w-3xl">
+        <div className="text-center mb-10">
+          <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider mb-2">UvealCare Clinical Platform</p>
+          <h1 className="text-[#E7ECF2] text-2xl font-semibold">Choose a workflow</h1>
+          <p className="text-[#8291A3] text-sm mt-2">Each disease has its own dedicated set of cases, fields, and tumor board workflow.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {profiles.length === 0 && (
+            <p className="text-[#8291A3] text-sm col-span-2 text-center">Loading available diseases…</p>
+          )}
+          {profiles.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => onSelect(p.key)}
+              className="text-left bg-[#12161D] border border-[#232A34] rounded-lg p-6 hover:border-[#0EA5E9] hover:bg-[#161B22] transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-[#0EA5E9]/15 flex items-center justify-center mb-4 group-hover:bg-[#0EA5E9]/25 transition-colors">
+                <EyeIcon size={18} />
+              </div>
+              <h2 className="text-[#E7ECF2] text-lg font-semibold mb-1.5">{p.display_name}</h2>
+              <p className="text-[#8291A3] text-xs leading-relaxed mb-3">
+                {blurbs[p.key] ?? `${p.field_count} tracked clinical fields.`}
+              </p>
+              <p className="text-[#0EA5E9] text-xs font-medium">Open workflow →</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, caseId?: string) => void; diseaseProfileKey: string }) {
   // All 5 rows now come from the backend — no more hardcoded percentages
   // for anyone. Starts empty, fills in once the fetch completes.
   const [patients, setPatients] = useState<
-    { case_id: string; patient_name: string; mrn: string; diagnosis: string; care_stage: string; readiness_pct: number; status: string }[]
+    { case_id: string; patient_name: string; mrn: string; diagnosis: string; care_stage: string; readiness_pct: number; status: string; disease_profile_key: string }[]
   >([]);
 
   const loadPatients = () => {
     apiFetch(`${API_BASE}/cases`)
       .then((res) => res.json())
-      .then((data) => setPatients(data))
+      .then((data) => setPatients(Array.isArray(data) ? data.filter((c) => c.disease_profile_key === diseaseProfileKey) : []))
       .catch((err) => console.error("Couldn't reach backend:", err));
   };
 
   useEffect(() => {
     loadPatients();
-  }, []);
+  }, [diseaseProfileKey]);
 
   // "+ New Patient" now actually creates a real patient — this is the
   // form state and submit handler for that.
@@ -652,24 +713,25 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
   const [isCreatingPatient, setIsCreatingPatient] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  // Real disease profiles from the backend — this is what makes the form
-  // itself prove the platform is generalizable: a brand-new patient can
-  // be created under ANY configured disease, not just uveal melanoma.
+  // Real disease profile info from the backend — used to show the
+  // current disease's real name in the form, and to pre-fill the new
+  // patient with it. This is locked to whichever workflow tab you're
+  // in, rather than letting a Sarcoma-tab session accidentally create a
+  // Uveal Melanoma patient (or vice versa).
   const [diseaseProfiles, setDiseaseProfiles] = useState<
     { key: string; display_name: string; field_count: number }[]
   >([]);
+  const currentProfile = diseaseProfiles.find((p) => p.key === diseaseProfileKey);
 
   useEffect(() => {
     apiFetch(`${API_BASE}/disease-profiles`)
       .then((res) => res.json())
       .then((data) => {
         setDiseaseProfiles(data);
-        if (data.length > 0) {
-          setNewPatient((prev) => ({ ...prev, disease_profile_key: data[0].key }));
-        }
+        setNewPatient((prev) => ({ ...prev, disease_profile_key: diseaseProfileKey }));
       })
       .catch((err) => console.error("Couldn't reach backend:", err));
-  }, []);
+  }, [diseaseProfileKey]);
 
   const handleCreatePatient = () => {
     setCreateError(null);
@@ -691,7 +753,7 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
       .then((data) => {
         loadPatients();
         setShowNewPatientForm(false);
-        setNewPatient({ mrn: "", name: "", dob: "", laterality: "OD", diagnosis: "", disease_profile_key: diseaseProfiles[0]?.key ?? "" });
+        setNewPatient({ mrn: "", name: "", dob: "", laterality: "OD", diagnosis: "", disease_profile_key: diseaseProfileKey });
         onNav("patient", data.case_id); // go straight to the new patient's profile
       })
       .catch((err) => setCreateError(err.message))
@@ -751,18 +813,11 @@ function DashboardScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => voi
             <h2 className="text-lg font-semibold text-[#E7ECF2] mb-4">New Patient</h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-[#C3CCD6] mb-1">Disease Profile *</label>
-                <select
-                  value={newPatient.disease_profile_key}
-                  onChange={(e) => setNewPatient({ ...newPatient, disease_profile_key: e.target.value })}
-                  className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0EA5E9]"
-                >
-                  {diseaseProfiles.length === 0 && <option>Loading…</option>}
-                  {diseaseProfiles.map((p) => (
-                    <option key={p.key} value={p.key}>{p.display_name} ({p.field_count} fields)</option>
-                  ))}
-                </select>
-                <p className="text-[10px] text-[#8291A3] mt-1">Determines which fields and stages this case will track.</p>
+                <label className="block text-xs font-medium text-[#C3CCD6] mb-1">Disease Profile</label>
+                <div className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm bg-[#161B22] text-[#8291A3]">
+                  {currentProfile ? `${currentProfile.display_name} (${currentProfile.field_count} fields)` : "Loading…"}
+                </div>
+                <p className="text-[10px] text-[#8291A3] mt-1">Matches whichever workflow tab you're currently in.</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-[#C3CCD6] mb-1">MRN *</label>
@@ -3111,20 +3166,29 @@ export default function App() {
   // currently-existing case the moment the app loads real data below.
   const [selectedCaseId, setSelectedCaseId] = useState<string>("");
 
-  // The moment we're logged in, fetch the real case list once and use
-  // the first real case as the fallback — this is what replaces the old
-  // hardcoded ID with something that's guaranteed to actually exist.
+  // Which of the two workflows (Uveal Melanoma / Soft Tissue Sarcoma) is
+  // currently active — chosen on the screen shown right after login.
+  // This is what actually splits the app into two separate sections
+  // sharing one account, rather than one combined patient list mixing
+  // both diseases together.
+  const [selectedDiseaseProfileKey, setSelectedDiseaseProfileKey] = useState<string>("");
+
+  // The moment a disease is chosen (or re-chosen), fetch a real fallback
+  // case belonging to THAT disease specifically — this is what replaces
+  // the old hardcoded ID with something that's guaranteed to actually
+  // exist, scoped correctly to whichever workflow is active.
   useEffect(() => {
-    if (!loggedInUser || selectedCaseId) return;
+    if (!loggedInUser || !selectedDiseaseProfileKey) return;
     apiFetch(`${API_BASE}/cases`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setSelectedCaseId(data[0].case_id);
+        if (Array.isArray(data)) {
+          const match = data.find((c) => c.disease_profile_key === selectedDiseaseProfileKey);
+          if (match) setSelectedCaseId(match.case_id);
         }
       })
       .catch((err) => console.error("Couldn't load a fallback case:", err));
-  }, [loggedInUser, selectedCaseId]);
+  }, [loggedInUser, selectedDiseaseProfileKey]);
 
   // Real browser back/forward support. Before this, every screen change
   // was just React state — the browser had no idea any of these screens
@@ -3138,7 +3202,7 @@ export default function App() {
   // the same behavior any normal website has; this app just never wrote
   // to history before, so the browser had nothing to step through.
   const SCREENS_NEEDING_CASE_ID: Screen[] = ["patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision"];
-  const ALL_SCREENS: Screen[] = ["dashboard", "patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision", "patient-pathway", "settings"];
+  const ALL_SCREENS: Screen[] = ["disease-select", "dashboard", "patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision", "patient-pathway", "settings"];
 
   const encodeHash = (s: Screen, caseId: string) =>
     SCREENS_NEEDING_CASE_ID.includes(s) ? `#${s}/${caseId}` : `#${s}`;
@@ -3183,6 +3247,8 @@ export default function App() {
   const handleLogout = () => {
     authToken = null;
     setLoggedInUser(null);
+    setSelectedDiseaseProfileKey("");
+    setSelectedCaseId("");
     setScreen("login");
     window.history.pushState(null, "", "#login");
   };
@@ -3192,10 +3258,36 @@ export default function App() {
       <LoginScreen
         onLogin={(user) => {
           setLoggedInUser(user);
+          setScreen("disease-select");
+          // disease-select needs its own real history entry too —
+          // otherwise it's the one screen Back would always skip
+          // straight past, since it was never reached through handleNav.
+          window.history.pushState(null, "", "#disease-select");
+        }}
+      />
+    );
+  }
+
+  if (screen === "disease-select") {
+    return (
+      <DiseaseSelectScreen
+        onSelect={(diseaseKey) => {
+          setSelectedDiseaseProfileKey(diseaseKey);
+          setSelectedCaseId(""); // force a fresh fallback case for the newly chosen disease
           setScreen("dashboard");
-          // Dashboard needs its own real history entry too — otherwise
-          // it's the one screen Back would always skip straight past,
-          // since it was never reached through handleNav.
+          window.history.pushState(null, "", "#dashboard");
+        }}
+      />
+    );
+  }
+
+  if (!selectedDiseaseProfileKey) {
+    return (
+      <DiseaseSelectScreen
+        onSelect={(diseaseKey) => {
+          setSelectedDiseaseProfileKey(diseaseKey);
+          setSelectedCaseId("");
+          setScreen("dashboard");
           window.history.pushState(null, "", "#dashboard");
         }}
       />
@@ -3228,10 +3320,18 @@ export default function App() {
         }
       `}</style>
       {!isPatientFacing && (
-        <Sidebar active={screen} onNav={handleNav} user={loggedInUser} />
+        <Sidebar
+          active={screen}
+          onNav={handleNav}
+          user={loggedInUser}
+          onSwitchWorkflow={() => {
+            setScreen("disease-select");
+            window.history.pushState(null, "", "#disease-select");
+          }}
+        />
       )}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {screen === "dashboard" && <DashboardScreen onNav={handleNav} />}
+        {screen === "dashboard" && <DashboardScreen onNav={handleNav} diseaseProfileKey={selectedDiseaseProfileKey} />}
         {selectedCaseId ? (
           <>
             {screen === "patient" && <PatientScreen onNav={handleNav} caseId={selectedCaseId} />}
