@@ -14,35 +14,14 @@ type Screen =
   | "settings";
 
 // ─── Constants / Data ─────────────────────────────────────────────────────────
-const PATIENT = {
-  name: "Margaret T. Sullivan",
-  dob: "1957-03-14",
-  age: 67,
-  sex: "Female",
-  mrn: "MRN-2847301",
-  dxDate: "2024-10-08",
-  diagnosis: "Uveal Melanoma — Choroidal",
-  laterality: "Right Eye (OD)",
-  stage: "T2bN0M0",
-  currentStage: 3, // 0-indexed: 0=Diagnosis, 1=Imaging, 2=Case Prep, 3=MDT Review, 4=Treatment Planning, 5=Treatment, 6=Surveillance
-  readiness: 82,
-  provider: "Dr. Alicia M. Reyes, MD",
-  referringProvider: "Dr. James O. Thornton, MD",
-  phone: "(617) 555-0192",
-  email: "m.sullivan@example.com",
-  insurance: "Blue Cross Blue Shield — Plan PPO",
-  nextAppt: "2024-11-14",
-};
+// (Removed: a hardcoded Margaret-specific PATIENT object used to live
+// here. PatientPathwayScreen now fetches real data for whichever
+// patient is actually selected, instead of always showing one
+// hardcoded showcase case.)
 
-const JOURNEY_STAGES = [
-  "Diagnosis",
-  "Imaging",
-  "Case Preparation",
-  "Multidisciplinary Review",
-  "Treatment Planning",
-  "Treatment",
-  "Surveillance",
-];
+// (Removed: a hardcoded generic journey-stages list also used to live
+// here. Every screen that shows a care-stage timeline now uses the real
+// per-disease stages returned by the backend instead.)
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: GridIcon },
@@ -2863,56 +2842,102 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
 }
 
 // 8. PATIENT CARE PATHWAY
-function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) => void }) {
-  const steps = [
-    {
-      label: "Initial Evaluation",
-      status: "done",
-      date: "October 8, 2024",
-      desc: "Your ophthalmologist completed a comprehensive eye examination and identified a pigmented mass in the back of your right eye. A diagnosis of uveal melanoma was made based on clinical features.",
-      detail: "Your evaluation included visual acuity testing, eye pressure measurement, and a dilated retinal exam using specialized lenses.",
-    },
-    {
-      label: "Imaging & Testing",
-      status: "done",
-      date: "October 10–16, 2024",
-      desc: "Specialized imaging of your eye was performed to precisely measure the tumor, identify its characteristics, and assess for any involvement of surrounding structures.",
-      detail: "Studies completed: B-scan ultrasound, OCT, Optos photography, and fluorescein angiography. Biopsy material was also sent for genetic testing.",
-    },
-    {
-      label: "Multidisciplinary Review",
-      status: "current",
-      date: "November 14, 2024 (scheduled)",
-      desc: "Your case will be reviewed by a team of specialists including an eye cancer specialist, radiation oncologist, radiation physicist, and medical oncologist.",
-      detail: "The team will review all your imaging and test results together and recommend the best treatment option for you. You will receive a call after this meeting to discuss the recommendation.",
-    },
-    {
-      label: "Treatment Planning",
-      status: "upcoming",
-      date: "To be scheduled",
-      desc: "Once a treatment recommendation is made, your care team will schedule detailed planning sessions to prepare for treatment.",
-      detail: "This may include additional imaging, simulation appointments, and coordination between multiple departments.",
-    },
-    {
-      label: "Treatment",
-      status: "upcoming",
-      date: "To be scheduled",
-      desc: "Your individualized treatment will be delivered based on the multidisciplinary team's recommendation.",
-      detail: "Treatment for uveal melanoma often involves a form of radiation therapy delivered precisely to the tumor while preserving as much of your vision as possible.",
-    },
-    {
-      label: "Surveillance",
-      status: "upcoming",
-      date: "Ongoing after treatment",
-      desc: "After treatment, you will have regular follow-up appointments to monitor your eye and check for any signs of recurrence or spread.",
-      detail: "Follow-up typically includes eye examinations, imaging of your liver (the most common site of spread), and blood tests.",
-    },
-  ];
+// Rule-based plain-language translations — deliberately NOT AI-generated.
+// Each entry here was written once, for a known, controlled clinical
+// option already used elsewhere in the app (the treatment/surveillance
+// dropdowns). This is the same principle as a pharmacist's printed
+// medication handout: fixed, reviewable text, not something generated
+// fresh for each patient. Anything outside this known list gets an
+// honest "ask your care team" fallback instead of a guessed translation.
+const TREATMENT_PLAIN_LANGUAGE: Record<string, string> = {
+  "Iodine-125 (I-125) plaque brachytherapy": "A small radioactive disc will be placed on the outside wall of your eye, near the tumor, for several days, then removed. This delivers radiation precisely to the tumor while sparing as much of your vision as possible.",
+  "Proton beam radiation therapy": "A focused beam of radiation particles will be aimed precisely at the tumor over a series of short outpatient sessions.",
+  "Enucleation": "Surgical removal of the affected eye. This is typically recommended when the tumor is too large or advanced for eye-preserving treatments.",
+  "Active surveillance (observation)": "No treatment yet — your care team will monitor the tumor closely with regular exams and imaging, and treat only if it shows signs of growth.",
+};
+
+const SURVEILLANCE_PLAIN_LANGUAGE: Record<string, string> = {
+  "Liver MRI every 6 months": "You'll have an MRI of your liver every 6 months, since that's the most common place this cancer can spread to. Catching any spread early gives more treatment options.",
+  "Liver MRI every 12 months": "You'll have an MRI of your liver once a year to check for any spread.",
+  "Annual LFTs + imaging": "You'll have a yearly blood test checking your liver function, along with imaging, to watch for any signs of spread.",
+};
+
+// Generic per-stage plain-language descriptions, keyed by the real stage
+// NAME (not hardcoded per-disease) — this is what lets the exact same
+// timeline correctly describe either Uveal Melanoma's or Sarcoma's care
+// stages, since most stage names are shared between disease profiles.
+const STAGE_PLAIN_LANGUAGE: Record<string, string> = {
+  "Diagnosis": "Your care team completed a clinical evaluation and confirmed your diagnosis.",
+  "Imaging": "Specialized imaging was performed to precisely characterize the tumor's size, location, and features.",
+  "Staging": "Imaging and testing were performed to determine the full extent of the disease.",
+  "Case Preparation": "Your care team gathered and organized all the information needed before presenting your case.",
+  "Multidisciplinary Review": "A team of specialists reviewed your case together and discussed the best treatment approach.",
+  "Treatment Planning": "Your care team is preparing the details needed to carry out the recommended treatment.",
+  "Treatment": "You are receiving your recommended treatment.",
+  "Surveillance": "You'll have regular follow-up appointments to monitor for any recurrence or spread.",
+};
+
+// Turns a raw diagnosis string like "Choroidal Melanoma OD" or "Soft
+// Tissue Sarcoma, Left Thigh" into a plain-language sentence, using
+// simple keyword matching rather than a full free-text translator —
+// safe because it only ever states the general tumor type and location
+// pattern, never invents specifics it wasn't given.
+function plainLanguageDiagnosis(diagnosis: string | null, laterality: string | null): string {
+  if (!diagnosis) return "Your care team has been evaluating your condition.";
+  const d = diagnosis.toLowerCase();
+  const sideWord = laterality === "OD" ? "right eye" : laterality === "OS" ? "left eye" : laterality === "OU" ? "both eyes" : "eye";
+  if (d.includes("melanoma") && (d.includes("choroidal") || d.includes("ciliary") || d.includes("iris"))) {
+    const location = d.includes("choroidal") ? "the back layer" : d.includes("ciliary body") ? "a structure behind the colored part" : "the colored part";
+    return `You have a tumor in ${location} of your ${sideWord}, called uveal melanoma. This is a rare cancer, and your care team specializes in treating it.`;
+  }
+  if (d.includes("sarcoma")) {
+    return `You have a soft tissue sarcoma — a rare type of cancer that develops in connective tissue such as muscle or fat. Your care team is coordinating a treatment plan specific to its location and characteristics.`;
+  }
+  return `Your diagnosis is ${diagnosis}. Ask your care team any questions about what this means for you.`;
+}
+
+function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
+  const [caseInfo, setCaseInfo] = useState<{
+    patient: string; mrn: string; care_stage: string; care_stages: string[];
+    diagnosis: string | null; laterality: string | null; primary_provider: string | null;
+  } | null>(null);
+
+  const [decision, setDecision] = useState<{
+    recommendation: string; surveillance_protocol: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    apiFetch(`${API_BASE}/cases/${caseId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setCaseInfo(data))
+      .catch((err) => console.error("Couldn't reach backend:", err));
+
+    apiFetch(`${API_BASE}/cases/${caseId}/decision`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setDecision(data))
+      .catch((err) => console.error("Couldn't reach backend:", err));
+  }, [caseId]);
+
+  const careStages = caseInfo?.care_stages ?? [];
+  const currentIndex = caseInfo ? careStages.indexOf(caseInfo.care_stage) : 0;
+
+  const firstName = caseInfo?.patient ? caseInfo.patient.split(" ")[0] : "";
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Print-only styling for the downloadable Care Summary — hides
+          everything except the summary card itself when printing, same
+          principle as the clinician-facing Export PDF elsewhere in the
+          app, but scoped to just this section. */}
+      <style>{`
+        @media print {
+          .care-summary-print-hide { display: none !important; }
+          .care-summary-print-show { display: block !important; }
+        }
+      `}</style>
+
       {/* Patient-facing header */}
-      <div className="px-8 py-5 shrink-0" style={{ background: "linear-gradient(to bottom, #0F2D56, #0A0E14)" }}>
+      <div className="px-8 py-5 shrink-0 care-summary-print-hide" style={{ background: "linear-gradient(to bottom, #0F2D56, #0A0E14)" }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
@@ -2924,7 +2949,7 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-white/60 text-xs">{PATIENT.name}</span>
+            <span className="text-white/60 text-xs">{caseInfo?.patient ?? "…"}</span>
             <button
               onClick={() => onNav("dashboard")}
               className="text-white/60 text-xs hover:text-white transition-colors border border-white/20 px-3 py-1.5 rounded"
@@ -2937,36 +2962,45 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
 
       <div className="flex-1 overflow-y-auto bg-[#0A0E14]">
         <div className="max-w-3xl mx-auto px-8 py-10">
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-[#E7ECF2]">Your Care Pathway</h1>
-            <p className="text-[#8B96A3] text-sm mt-1">
-              Hello, Margaret. This page shows where you are in your uveal melanoma care and what to expect next.
-            </p>
+          <div className="mb-8 flex items-start justify-between gap-4 care-summary-print-hide">
+            <div>
+              <h1 className="text-2xl font-semibold text-[#E7ECF2]">Your Care Pathway</h1>
+              <p className="text-[#8B96A3] text-sm mt-1">
+                {firstName ? `Hello, ${firstName}.` : "Hello."} This page shows where you are in your care and what to expect next.
+              </p>
+            </div>
+            <button
+              onClick={() => window.print()}
+              className="shrink-0 border border-[#2E3742] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#161B22] transition-colors"
+            >
+              Download / Print Summary
+            </button>
           </div>
 
           {/* Current step callout */}
-          <div className="mb-8 p-5 bg-sky-500/10 border border-sky-500/30 rounded-lg flex items-start gap-4">
-            <div className="w-9 h-9 rounded-full bg-[#0F2D56] flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-white text-sm font-bold">3</span>
+          {caseInfo && (
+            <div className="mb-8 p-5 bg-sky-500/10 border border-sky-500/30 rounded-lg flex items-start gap-4 care-summary-print-hide">
+              <div className="w-9 h-9 rounded-full bg-[#0F2D56] flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-white text-sm font-bold">{currentIndex + 1}</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#E7ECF2]">You are currently at: {caseInfo.care_stage}</p>
+                <p className="text-sm text-[#C3CCD6] mt-1">
+                  {STAGE_PLAIN_LANGUAGE[caseInfo.care_stage] ?? "Your care team is coordinating your next steps."}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-[#E7ECF2]">You are currently at: Multidisciplinary Review</p>
-              <p className="text-sm text-[#C3CCD6] mt-1">
-                Your care team is preparing to present your case to a group of specialists on <strong>November 14, 2024</strong>. You do not need to do anything right now. We will contact you with the team's recommendation after the meeting.
-              </p>
-            </div>
-          </div>
+          )}
 
-          {/* Steps */}
-          <div className="space-y-0">
-            {steps.map((step, i) => {
-              const isDone = step.status === "done";
-              const isCurrent = step.status === "current";
-              const isUpcoming = step.status === "upcoming";
+          {/* Steps — real per-disease stages, plain-language descriptions */}
+          <div className="space-y-0 care-summary-print-hide">
+            {careStages.map((stageName, i) => {
+              const isDone = i < currentIndex;
+              const isCurrent = i === currentIndex;
+              const isUpcoming = i > currentIndex;
 
               return (
-                <div key={step.label} className="flex gap-5">
-                  {/* Timeline */}
+                <div key={stageName} className="flex gap-5">
                   <div className="flex flex-col items-center">
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
                       isDone ? "bg-emerald-500 border-emerald-500 text-white" :
@@ -2983,43 +3017,30 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
                         <span className="text-xs font-semibold">{i + 1}</span>
                       )}
                     </div>
-                    {i < steps.length - 1 && (
+                    {i < careStages.length - 1 && (
                       <div className={`w-0.5 flex-1 my-1 ${isDone ? "bg-emerald-300" : "bg-[#232A34]"}`} style={{ minHeight: "32px" }} />
                     )}
                   </div>
 
-                  {/* Content */}
-                  <div className={`flex-1 pb-8 ${i === steps.length - 1 ? "pb-0" : ""}`}>
+                  <div className={`flex-1 pb-8 ${i === careStages.length - 1 ? "pb-0" : ""}`}>
                     <div className={`rounded-lg border p-4 ${
                       isCurrent ? "bg-[#12161D] border-[#0F2D56] shadow-sm" :
-                      isDone ? "bg-emerald-500/10/50 border-emerald-500/30" :
+                      isDone ? "bg-emerald-500/10 border-emerald-500/30" :
                       "bg-[#12161D] border-[#232A34]"
                     }`}>
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className={`font-semibold ${isCurrent ? "text-[#0F2D56]" : isDone ? "text-emerald-300" : "text-[#7C8794]"}`}>
-                              {isDone && "✓ "}{step.label}
-                            </h3>
-                            {isCurrent && (
-                              <span className="text-[10px] font-semibold text-white bg-[#0F2D56] px-2 py-0.5 rounded">
-                                You are here
-                              </span>
-                            )}
-                          </div>
-                          <p className={`text-xs mt-0.5 ${isDone ? "text-emerald-400" : isCurrent ? "text-[#0EA5E9]" : "text-[#7C8794]"}`}>
-                            {step.date}
-                          </p>
-                        </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className={`font-semibold ${isCurrent ? "text-[#0EA5E9]" : isDone ? "text-emerald-300" : "text-[#7C8794]"}`}>
+                          {isDone && "✓ "}{stageName}
+                        </h3>
+                        {isCurrent && (
+                          <span className="text-[10px] font-semibold text-white bg-[#0F2D56] px-2 py-0.5 rounded">
+                            You are here
+                          </span>
+                        )}
                       </div>
                       <p className={`text-sm leading-relaxed ${isUpcoming ? "text-[#8291A3]" : "text-[#C3CCD6]"}`}>
-                        {step.desc}
+                        {STAGE_PLAIN_LANGUAGE[stageName] ?? "Your care team will guide you through this step."}
                       </p>
-                      {!isUpcoming && (
-                        <p className={`text-xs leading-relaxed mt-2 pt-2 border-t ${isDone ? "border-emerald-500/30 text-emerald-400/70" : "border-[#161B22] text-[#8291A3]"}`}>
-                          {step.detail}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -3027,10 +3048,47 @@ function PatientPathwayScreen({ onNav }: { onNav: (s: Screen, caseId?: string) =
             })}
           </div>
 
-          <div className="mt-8 p-5 bg-[#12161D] rounded-lg border border-[#232A34]">
+          {/* My Care Summary — the downloadable, plain-language document.
+              Only ever shows pre-written translations for known,
+              controlled clinical options; anything else honestly says
+              to ask the care team rather than guessing. */}
+          <div className="mt-8 p-6 bg-[#12161D] rounded-lg border border-[#232A34] care-summary-print-show">
+            <h2 className="text-lg font-semibold text-[#E7ECF2] mb-4">My Care Summary</h2>
+
+            <div className="mb-4">
+              <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Your Diagnosis</p>
+              <p className="text-sm text-[#C3CCD6] leading-relaxed">
+                {plainLanguageDiagnosis(caseInfo?.diagnosis ?? null, caseInfo?.laterality ?? null)}
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Treatment Plan</p>
+              <p className="text-sm text-[#C3CCD6] leading-relaxed">
+                {decision?.recommendation
+                  ? (TREATMENT_PLAIN_LANGUAGE[decision.recommendation] ?? "Your care team has recommended a treatment plan — ask them to walk you through the details.")
+                  : "A treatment plan hasn't been finalized yet. Your care team will discuss this with you once it's decided."}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Follow-up / Surveillance Plan</p>
+              <p className="text-sm text-[#C3CCD6] leading-relaxed">
+                {decision?.surveillance_protocol
+                  ? (SURVEILLANCE_PLAIN_LANGUAGE[decision.surveillance_protocol] ?? "A follow-up plan has been set — ask your care team for the details.")
+                  : "A follow-up plan will be set once your treatment plan is finalized."}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 p-5 bg-[#12161D] rounded-lg border border-[#232A34] care-summary-print-hide">
             <p className="text-sm font-semibold text-[#E7ECF2] mb-1">Questions about your care?</p>
-            <p className="text-sm text-[#8B96A3]">Contact Dr. Alicia Reyes' office at (617) 555-0100 or through your patient portal messaging.</p>
-            <p className="text-xs text-[#8291A3] mt-2">This information is provided by your care team at UvealCare. All clinical decisions are made by your physicians.</p>
+            <p className="text-sm text-[#8B96A3]">
+              {caseInfo?.primary_provider
+                ? `Contact ${caseInfo.primary_provider}'s office, or reach out through your patient portal messaging.`
+                : "Contact your care team's office, or reach out through your patient portal messaging."}
+            </p>
+            <p className="text-xs text-[#8291A3] mt-2">This information is provided by your care team. All clinical decisions are made by your physicians.</p>
           </div>
         </div>
       </div>
@@ -3347,7 +3405,7 @@ export default function App() {
             </div>
           )
         )}
-        {screen === "patient-pathway" && <PatientPathwayScreen onNav={handleNav} />}
+        {screen === "patient-pathway" && <PatientPathwayScreen onNav={handleNav} caseId={selectedCaseId} />}
         {screen === "settings" && <SettingsScreen user={loggedInUser} onLogout={handleLogout} />}
       </div>
     </div>
