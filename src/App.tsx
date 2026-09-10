@@ -1448,12 +1448,17 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   // Real tasks tied to this case — what "Assign task" buttons now
   // actually create, instead of doing nothing.
   const [tasks, setTasks] = useState<
-    { id: string; description: string; assignee_name: string | null; status: string; due_date: string | null }[]
+    { id: string; description: string; assignee_name: string | null; assignee_id: string | null; status: string; due_date: string | null }[]
   >([]);
   // Which missing item currently has its little "assign" form open —
   // only one at a time, to keep the UI simple.
   const [assigningLabel, setAssigningLabel] = useState<string | null>(null);
-  const [assigneeInput, setAssigneeInput] = useState("");
+  // Real accounts on the platform — this is what replaces free-text
+  // assignee names with an actual selectable person, so "who's doing
+  // this" is a real fact instead of typed text that could typo or go
+  // stale if that person's name ever changes.
+  const [users, setUsers] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [assigneeUserId, setAssigneeUserId] = useState("");
   const [isAssigning, setIsAssigning] = useState(false);
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
 
@@ -1478,26 +1483,34 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
       .catch((err) => console.error("Couldn't reach backend:", err));
     loadReadiness();
     loadTasks();
+    apiFetch(`${API_BASE}/users`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setUsers(data);
+          if (data.length > 0) setAssigneeUserId(data[0].id);
+        }
+      })
+      .catch((err) => console.error("Couldn't reach backend:", err));
   }, [caseId]);
 
   // This is what makes "Assign task" real: it creates an actual Task row
   // tied to this case, tagged with whichever missing field prompted it.
   const handleAssignTask = (fieldLabel: string) => {
-    if (!assigneeInput.trim()) return;
+    if (!assigneeUserId) return;
     setIsAssigning(true);
     apiFetch(`${API_BASE}/cases/${caseId}/tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         description: `Resolve: ${fieldLabel}`,
-        assignee_name: assigneeInput.trim(),
+        assignee_id: assigneeUserId,
       }),
     })
       .then((res) => res.json())
       .then(() => {
         loadTasks();
         setAssigningLabel(null);
-        setAssigneeInput("");
       })
       .catch((err) => console.error("Couldn't assign task:", err))
       .finally(() => setIsAssigning(false));
@@ -1673,23 +1686,26 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                         </p>
                       ) : assigningLabel === label ? (
                         <div className="mt-2 flex items-center gap-1.5">
-                          <input
+                          <select
                             autoFocus
-                            value={assigneeInput}
-                            onChange={(e) => setAssigneeInput(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleAssignTask(label)}
-                            placeholder="Assignee name…"
-                            className="text-xs border border-red-500/40 rounded px-2 py-1 w-32 focus:outline-none focus:border-red-500"
-                          />
+                            value={assigneeUserId}
+                            onChange={(e) => setAssigneeUserId(e.target.value)}
+                            className="text-xs border border-red-500/40 rounded px-2 py-1 bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-red-500"
+                          >
+                            {users.length === 0 && <option value="">No accounts yet</option>}
+                            {users.map((u) => (
+                              <option key={u.id} value={u.id}>{u.name}</option>
+                            ))}
+                          </select>
                           <button
                             onClick={() => handleAssignTask(label)}
-                            disabled={isAssigning || !assigneeInput.trim()}
+                            disabled={isAssigning || !assigneeUserId}
                             className="text-xs font-medium text-white bg-red-500 px-2 py-1 rounded hover:bg-red-600 transition-colors disabled:opacity-50"
                           >
                             {isAssigning ? "…" : "Go"}
                           </button>
                           <button
-                            onClick={() => { setAssigningLabel(null); setAssigneeInput(""); }}
+                            onClick={() => setAssigningLabel(null)}
                             className="text-xs text-red-400 hover:text-red-400"
                           >
                             ✕
