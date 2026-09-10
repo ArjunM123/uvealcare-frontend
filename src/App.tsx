@@ -685,6 +685,53 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
     loadPatients();
   }, [diseaseProfileKey]);
 
+  // Real tumor board scheduling — this is what replaces the hardcoded
+  // "Thursday, Nov 14, 2024" placeholder that used to show regardless
+  // of the actual date or which patients were actually incomplete.
+  const [nextMeetingDate, setNextMeetingDate] = useState<string | null>(null);
+  const [isEditingMeeting, setIsEditingMeeting] = useState(false);
+  const [meetingDateInput, setMeetingDateInput] = useState("");
+  const [isSavingMeeting, setIsSavingMeeting] = useState(false);
+
+  const loadNextMeeting = () => {
+    apiFetch(`${API_BASE}/tumor-board/next`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setNextMeetingDate(data?.meeting_date ?? null))
+      .catch((err) => console.error("Couldn't reach backend:", err));
+  };
+
+  useEffect(() => {
+    loadNextMeeting();
+  }, []);
+
+  const handleSaveMeetingDate = () => {
+    if (!meetingDateInput) return;
+    setIsSavingMeeting(true);
+    apiFetch(`${API_BASE}/tumor-board/next`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ meeting_date: meetingDateInput }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        loadNextMeeting();
+        setIsEditingMeeting(false);
+      })
+      .catch((err) => console.error("Couldn't save meeting date:", err))
+      .finally(() => setIsSavingMeeting(false));
+  };
+
+  // Real days-until calculation, and a real list of which specific
+  // patients (in this workflow) aren't ready yet — replacing the
+  // hardcoded fake names that used to show for every account.
+  const daysUntilMeeting = nextMeetingDate
+    ? Math.ceil((new Date(nextMeetingDate + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24))
+    : null;
+  const incompletePatients = patients.filter((p) => p.readiness_pct < 100);
+  // Honest scope: this is a visible in-app alert, not an email or push
+  // notification — no notification infrastructure exists to send those.
+  const showUrgentAlert = daysUntilMeeting !== null && daysUntilMeeting <= 7 && daysUntilMeeting >= 0 && incompletePatients.length > 0;
+
   // "+ New Patient" now actually creates a real patient — this is the
   // form state and submit handler for that.
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
@@ -961,23 +1008,88 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
             </Card>
 
             <Card className="p-4">
-              <SectionHeader>Next Tumor Board</SectionHeader>
-              <div className="space-y-2">
-                <p className="text-[#E7ECF2] text-sm font-semibold">Thursday, Nov 14, 2024</p>
-                <p className="text-[#8B96A3] text-xs">2:00 PM — Video conference</p>
-                <div className="pt-2 border-t border-[#161B22]">
-                  <p className="text-[10px] text-[#8291A3] mb-1.5">Cases Scheduled</p>
-                  <p className="text-[#E7ECF2] text-xs font-medium">Sullivan, M. — Choroidal OD</p>
-                  <p className="text-[#E7ECF2] text-xs font-medium">Kowalski, D. — Choroidal OD</p>
-                  <p className="text-[#E7ECF2] text-xs font-medium">Hargrove, R. — Ciliary Body OS</p>
-                </div>
-                <button
-                  onClick={() => onNav("tumor-board")}
-                  className="w-full mt-2 border border-[#0F2D56] text-[#0F2D56] rounded py-2 text-xs font-medium hover:bg-[#0F2D56] hover:text-white transition-colors"
-                >
-                  Prepare Cases
-                </button>
+              <div className="flex items-center justify-between mb-1">
+                <SectionHeader>Next Tumor Board</SectionHeader>
+                {!isEditingMeeting && (
+                  <button
+                    onClick={() => { setIsEditingMeeting(true); setMeetingDateInput(nextMeetingDate ?? ""); }}
+                    className="text-[10px] text-[#0EA5E9] hover:underline -mt-3"
+                  >
+                    {nextMeetingDate ? "Change" : "Set date"}
+                  </button>
+                )}
               </div>
+
+              {isEditingMeeting ? (
+                <div className="space-y-2">
+                  <input
+                    type="date"
+                    value={meetingDateInput}
+                    onChange={(e) => setMeetingDateInput(e.target.value)}
+                    className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-xs bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-[#0EA5E9]"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsEditingMeeting(false)}
+                      className="flex-1 border border-[#2E3742] text-[#C3CCD6] rounded py-1.5 text-xs hover:bg-[#161B22] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveMeetingDate}
+                      disabled={isSavingMeeting || !meetingDateInput}
+                      className="flex-1 bg-[#0F2D56] text-white rounded py-1.5 text-xs font-semibold hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-60"
+                    >
+                      {isSavingMeeting ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {nextMeetingDate ? (
+                    <>
+                      <p className="text-[#E7ECF2] text-sm font-semibold">
+                        {new Date(nextMeetingDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                      </p>
+                      <p className="text-[#8B96A3] text-xs">
+                        {daysUntilMeeting !== null && daysUntilMeeting >= 0
+                          ? daysUntilMeeting === 0 ? "Today" : `In ${daysUntilMeeting} day${daysUntilMeeting === 1 ? "" : "s"}`
+                          : "This date has passed"}
+                      </p>
+
+                      {showUrgentAlert && (
+                        <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded">
+                          <p className="text-[11px] text-red-300 font-medium">
+                            {incompletePatients.length} case{incompletePatients.length === 1 ? "" : "s"} still incomplete — meeting in {daysUntilMeeting} day{daysUntilMeeting === 1 ? "" : "s"}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="pt-2 border-t border-[#161B22]">
+                        <p className="text-[10px] text-[#8291A3] mb-1.5">
+                          {incompletePatients.length > 0 ? "Not Yet Ready" : "All Cases Ready"}
+                        </p>
+                        {incompletePatients.length === 0 && patients.length > 0 && (
+                          <p className="text-[#8291A3] text-xs italic">Every case is 100% complete.</p>
+                        )}
+                        {incompletePatients.slice(0, 4).map((p) => (
+                          <p key={p.case_id} className="text-[#E7ECF2] text-xs font-medium">
+                            {p.patient_name} — {p.readiness_pct}%
+                          </p>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-[#8291A3] text-xs italic">No tumor board date set yet.</p>
+                  )}
+                  <button
+                    onClick={() => onNav("tumor-board")}
+                    className="w-full mt-2 border border-[#0F2D56] text-[#0F2D56] rounded py-2 text-xs font-medium hover:bg-[#0F2D56] hover:text-white transition-colors"
+                  >
+                    Prepare Cases
+                  </button>
+                </div>
+              )}
             </Card>
           </div>
         </div>
