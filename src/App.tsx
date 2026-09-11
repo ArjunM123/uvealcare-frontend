@@ -1158,7 +1158,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
   const [readinessSummary, setReadinessSummary] = useState<{
     readiness_pct: number;
     missing_information: string[];
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }[];
   } | null>(null);
 
   useEffect(() => {
@@ -1534,7 +1534,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
     ready_for_review: boolean;
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }[];
     missing_information: string[];
   } | null>(null);
 
@@ -1552,6 +1552,11 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   const [resolveMethod, setResolveMethod] = useState("");
   const [resolvePrecision, setResolvePrecision] = useState("");
   const [resolveLengthType, setResolveLengthType] = useState("");
+  // Structured numbers, separate from the free-text description above —
+  // these power both the real COMS staging calculator and the ability
+  // to track tumor size as a genuine trend across multiple visits.
+  const [resolveBasalDiameter, setResolveBasalDiameter] = useState("");
+  const [resolveApicalHeight, setResolveApicalHeight] = useState("");
   // Lets a status be reverted, not just moved forward — e.g. an item
   // marked Complete by mistake, or new information means it genuinely
   // needs redoing. Real clinical data isn't always a one-way ratchet.
@@ -1640,12 +1645,14 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   // This is the new piece: clicking "Resolve" actually writes to the
   // backend (POST), then re-fetches readiness so the percentage and
   // checklist update live — the first "write" action in the whole app.
-  const openResolveForm = (fieldKey: string, existing?: { value: string | null; status?: string; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }) => {
+  const openResolveForm = (fieldKey: string, existing?: { value: string | null; status?: string; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }) => {
     setResolveFormKey(fieldKey);
     setResolveValue(existing?.value ?? "");
     setResolveMethod(existing?.measurement_method ?? "");
     setResolvePrecision(existing?.measurement_precision ?? "");
     setResolveLengthType(existing?.measurement_length_type ?? "");
+    setResolveBasalDiameter(existing?.basal_diameter_mm != null ? String(existing.basal_diameter_mm) : "");
+    setResolveApicalHeight(existing?.apical_height_mm != null ? String(existing.apical_height_mm) : "");
     // Default to "complete" when resolving something missing for the
     // first time; pre-fill the real current status when editing.
     setResolveStatus(existing?.status && existing.status !== "missing" ? existing.status : "complete");
@@ -1667,6 +1674,8 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
         measurement_method: resolveMethod || null,
         measurement_precision: resolvePrecision || null,
         measurement_length_type: resolveLengthType || null,
+        basal_diameter_mm: resolveBasalDiameter ? parseFloat(resolveBasalDiameter) : null,
+        apical_height_mm: resolveApicalHeight ? parseFloat(resolveApicalHeight) : null,
       }),
     })
       .then((res) => res.json())
@@ -1983,7 +1992,33 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                             or whether a basal diameter is a chord- or
                             arc-length. */}
                         {item.category === "measurement" && resolveStatus === "complete" && (
-                          <div className="grid grid-cols-3 gap-2">
+                          <>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[9px] text-[#8291A3] mb-0.5">Largest basal diameter (mm)</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={resolveBasalDiameter}
+                                  onChange={(e) => setResolveBasalDiameter(e.target.value)}
+                                  placeholder="e.g. 10.1"
+                                  className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-[11px] bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-[#0EA5E9]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[9px] text-[#8291A3] mb-0.5">Apical height (mm)</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={resolveApicalHeight}
+                                  onChange={(e) => setResolveApicalHeight(e.target.value)}
+                                  placeholder="e.g. 3.9"
+                                  className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-[11px] bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-[#0EA5E9]"
+                                />
+                              </div>
+                            </div>
+                            <p className="text-[9px] text-[#7C8794] -mt-1">These two numbers are what let tumor size be tracked as a real trend over time.</p>
+                            <div className="grid grid-cols-3 gap-2">
                             <select
                               value={resolveMethod}
                               onChange={(e) => setResolveMethod(e.target.value)}
@@ -2019,7 +2054,8 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                               <option value="Arc length">Arc length</option>
                               <option value="Not specified">Not specified</option>
                             </select>
-                          </div>
+                            </div>
+                          </>
                         )}
 
                         <div className="flex gap-2">
@@ -2089,7 +2125,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   // checklist so both the imaging table AND the measurements card below
   // can show real per-patient data instead of one hardcoded showcase case.
   const [checklist, setChecklist] = useState<
-    { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[] | null
+    { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }[] | null
   >(null);
 
   // Tracks which study is currently being ordered, so only that row's
@@ -2103,6 +2139,21 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   >([]);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Real measurement history — every past recording of tumor size, not
+  // just the single most recent value. This is what lets growth be
+  // tracked as a genuine trend across visits, which manual chart review
+  // does poorly and a single stored number can't show at all.
+  const [measurementHistory, setMeasurementHistory] = useState<
+    { value: string | null; basal_diameter_mm: number | null; apical_height_mm: number | null; measurement_method: string | null; recorded_at: string | null }[]
+  >([]);
+
+  const loadMeasurementHistory = () => {
+    apiFetch(`${API_BASE}/cases/${caseId}/measurements/tumor_dimensions`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setMeasurementHistory(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Couldn't reach backend:", err));
+  };
 
   const loadImageList = () => {
     apiFetch(`${API_BASE}/cases/${caseId}/images`)
@@ -2184,6 +2235,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   useEffect(() => {
     loadImaging();
     loadImageList();
+    loadMeasurementHistory();
   }, [caseId]);
 
   const imagingItems = checklist?.filter((c) => c.category === "imaging") ?? null;
@@ -2424,6 +2476,42 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
             Not yet recorded for this patient — see the "Tumor measurements" status on the Case Readiness page.
           </p>
         )}
+
+        {/* Measurement history — every past recording, oldest first, so
+            growth (or stability) across visits is genuinely visible,
+            not just the single most recent number. */}
+        {measurementHistory.length > 1 && (
+          <div className="mt-4 pt-4 border-t border-[#232A34]">
+            <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-2">History ({measurementHistory.length} recordings)</p>
+            <div className="space-y-2">
+              {measurementHistory.map((h, i) => {
+                const prev = i > 0 ? measurementHistory[i - 1] : null;
+                let changeLabel: string | null = null;
+                let changeColor = "text-[#8291A3]";
+                if (prev && h.basal_diameter_mm != null && prev.basal_diameter_mm != null) {
+                  const diff = h.basal_diameter_mm - prev.basal_diameter_mm;
+                  if (Math.abs(diff) >= 0.1) {
+                    changeLabel = `${diff > 0 ? "+" : ""}${diff.toFixed(1)}mm basal diameter`;
+                    changeColor = diff > 0 ? "text-amber-400" : "text-emerald-400";
+                  } else {
+                    changeLabel = "No significant change";
+                  }
+                }
+                return (
+                  <div key={i} className="flex items-start justify-between gap-3 text-xs">
+                    <div>
+                      <p className="text-[#C3CCD6]">{h.value}</p>
+                      {changeLabel && <p className={`text-[10px] mt-0.5 ${changeColor}`}>{changeLabel}</p>}
+                    </div>
+                    <span className="text-[10px] text-[#7C8794] shrink-0">
+                      {h.recorded_at ? new Date(h.recorded_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
@@ -2459,7 +2547,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
   // genuinely generated from real data for whichever patient this is.
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }[];
     missing_information: string[];
   } | null>(null);
   const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string; diagnosis: string | null; laterality: string | null } | null>(null);
