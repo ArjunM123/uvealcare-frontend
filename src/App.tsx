@@ -2121,6 +2121,12 @@ function AuthenticatedImage({ caseId, fieldKey, alt, className }: { caseId: stri
 }
 
 function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
+  // Which uploaded image (if any) is currently shown full-size in the
+  // enlarge overlay — addresses real clinical feedback that a tiny
+  // thumbnail and text description aren\'t enough to actually review an
+  // image; clicking it now opens a large, genuinely readable view.
+  const [enlargedImage, setEnlargedImage] = useState<{ fieldKey: string; label: string } | null>(null);
+
   // Same live-fetch pattern as the other screens — pulling the full
   // checklist so both the imaging table AND the measurements card below
   // can show real per-patient data instead of one hardcoded showcase case.
@@ -2361,12 +2367,18 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                 </td>
                 <td className="px-5 py-3.5">
                   {hasImage ? (
-                    <AuthenticatedImage
-                      caseId={caseId}
-                      fieldKey={s.key}
-                      alt={`${s.field} image`}
-                      className="w-16 h-16 object-cover rounded border border-[#232A34]"
-                    />
+                    <button
+                      onClick={() => setEnlargedImage({ fieldKey: s.key, label: s.field })}
+                      className="block hover:opacity-80 hover:ring-2 hover:ring-[#0EA5E9] rounded transition-all"
+                      title="Click to view full size"
+                    >
+                      <AuthenticatedImage
+                        caseId={caseId}
+                        fieldKey={s.key}
+                        alt={`${s.field} image`}
+                        className="w-28 h-28 object-cover rounded border border-[#232A34]"
+                      />
+                    </button>
                   ) : (
                     <span className="text-[10px] text-[#7C8794] italic">No image</span>
                   )}
@@ -2513,6 +2525,37 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
           </div>
         )}
       </Card>
+    </div>
+  );
+
+      {/* Full-size image overlay — real clinical feedback was that a
+          tiny thumbnail and a text description aren't enough to
+          actually review an image. Click any thumbnail above to open
+          it here, large enough to genuinely read. */}
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-8"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div className="max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white text-sm font-medium">{enlargedImage.label}</p>
+              <button
+                onClick={() => setEnlargedImage(null)}
+                className="text-white/70 hover:text-white text-sm border border-white/30 rounded px-3 py-1"
+              >
+                Close ✕
+              </button>
+            </div>
+            <AuthenticatedImage
+              caseId={caseId}
+              fieldKey={enlargedImage.fieldKey}
+              alt={enlargedImage.label}
+              className="max-w-full max-h-[80vh] object-contain rounded border border-white/20"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
