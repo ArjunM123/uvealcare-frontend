@@ -2525,8 +2525,6 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
           </div>
         )}
       </Card>
-    </div>
-  );
 
       {/* Full-size image overlay — real clinical feedback was that a
           tiny thumbnail and a text description aren't enough to
