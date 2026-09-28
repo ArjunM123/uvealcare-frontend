@@ -8,6 +8,7 @@ type Screen =
   | "patient"
   | "case-readiness"
   | "imaging"
+  | "case-packet"
   | "tumor-board"
   | "tumor-board-decision"
   | "patient-pathway"
@@ -673,10 +674,35 @@ function DiseaseSelectScreen({ onSelect }: { onSelect: (diseaseKey: string) => v
 }
 
 function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, caseId?: string) => void; diseaseProfileKey: string }) {
-  // All 5 rows now come from the backend — no more hardcoded percentages
+  // All rows now come from the backend — no more hardcoded percentages
   // for anyone. Starts empty, fills in once the fetch completes.
+  //
+  // Beyond identity and overall readiness, this is a real *population*
+  // view of the disease — not just a patient list — so it also carries
+  // the handful of things a clinician scanning every melanoma patient at
+  // once actually wants: laterality, imaging progress on its own,
+  // the latest measurement and whether it's grown or shrunk, and the
+  // recorded follow-up date so who's overdue is visible without opening
+  // each chart individually. That's the concrete answer to "what does
+  // this give me over Epic" — a generic EHR patient list can't show
+  // this scoped to one disease without a custom report built per site.
   const [patients, setPatients] = useState<
-    { case_id: string; patient_name: string; mrn: string; diagnosis: string; care_stage: string; readiness_pct: number; status: string; disease_profile_key: string }[]
+    {
+      case_id: string;
+      patient_name: string;
+      mrn: string;
+      diagnosis: string;
+      laterality: string | null;
+      care_stage: string;
+      readiness_pct: number;
+      status: string;
+      disease_profile_key: string;
+      imaging_pct: number | null;
+      key_measurement: string | null;
+      measurement_trend: "growing" | "shrinking" | "stable" | null;
+      follow_up_date: string | null;
+      surveillance_protocol: string | null;
+    }[]
   >([]);
 
   const loadPatients = () => {
@@ -790,6 +816,29 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
       .catch((err) => setCreateError(err.message))
       .finally(() => setIsCreatingPatient(false));
   };
+
+  // Days until (positive) or since (negative) a date, so the follow-up
+  // column and the sort below share one definition of "overdue."
+  const daysUntil = (dateStr: string) =>
+    Math.round((new Date(dateStr + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
+
+  // Sorting the population view is the difference between "a list of
+  // patients" and something a clinician actually scans before clinic —
+  // by default, whoever is most overdue for follow-up floats to the
+  // top, which is exactly the kind of at-a-glance triage a generic
+  // per-patient EHR view doesn't give you across a whole disease cohort.
+  const [sortMode, setSortMode] = useState<"urgency" | "readiness" | "name">("urgency");
+
+  const sortedPatients = [...patients].sort((a, b) => {
+    if (sortMode === "name") return a.patient_name.localeCompare(b.patient_name);
+    if (sortMode === "readiness") return a.readiness_pct - b.readiness_pct;
+    // "urgency": no follow-up date sorts last; among the rest, most
+    // overdue (most negative days) first, then soonest upcoming.
+    const aDays = a.follow_up_date ? daysUntil(a.follow_up_date) : Number.POSITIVE_INFINITY;
+    const bDays = b.follow_up_date ? daysUntil(b.follow_up_date) : Number.POSITIVE_INFINITY;
+    if (aDays !== bDays) return aDays - bDays;
+    return a.readiness_pct - b.readiness_pct;
+  });
 
   // Summary stats computed from the real list, not hardcoded — these
   // will always match whatever's actually in the patients table above.
@@ -937,53 +986,113 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
         </div>
 
         <div className="grid grid-cols-[1fr_320px] gap-6">
-          {/* Patient list */}
+          {/* Patient list — a real population view of this disease, not
+              just a table of names. Sortable by follow-up urgency by
+              default, since that's the specific thing a clinician can't
+              get from a generic per-patient EHR view without a custom
+              report built per site. */}
           <Card>
-            <div className="px-5 py-4 border-b border-[#161B22]">
-              <SectionHeader>Active Patients</SectionHeader>
+            <div className="px-5 py-4 border-b border-[#161B22] flex items-center justify-between">
+              <div>
+                <SectionHeader>Active Patients</SectionHeader>
+                <p className="text-[10px] text-[#7C8794] -mt-2">
+                  Every {currentProfile?.display_name ?? "disease"} patient, one place — sorted so who needs attention shows up first.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <label className="text-[10px] text-[#8291A3]">Sort:</label>
+                <select
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
+                  className="bg-[#161B22] border border-[#232A34] text-[#C3CCD6] text-[11px] rounded px-2 py-1 focus:outline-none focus:border-[#0EA5E9]"
+                >
+                  <option value="urgency">Follow-up urgency</option>
+                  <option value="readiness">Least ready first</option>
+                  <option value="name">Name A–Z</option>
+                </select>
+              </div>
             </div>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#161B22]">
-                  {["Patient", "MRN", "Diagnosis", "Stage", "Case Readiness", "Tasks", ""].map((h) => (
-                    <th key={h} className="px-5 py-2.5 text-left text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">
+                  {["Patient", "MRN", "Lat.", "Stage", "Imaging", "Measurement", "Follow-up", "Readiness", ""].map((h) => (
+                    <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {patients.map((p) => (
-                  <tr
-                    key={p.case_id}
-                    className="border-b border-[#0A0E14] hover:bg-[#0A0E14] cursor-pointer transition-colors"
-                    onClick={() => onNav("patient", p.case_id)}
-                  >
-                    <td className="px-5 py-3">
-                      <p className="text-[#E7ECF2] text-sm font-medium">{p.patient_name}</p>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="font-mono text-[11px] text-[#8B96A3]">{p.mrn}</span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <p className="text-[#C3CCD6] text-xs">{p.diagnosis}</p>
-                    </td>
-                    <td className="px-5 py-3">
-                      <StatusBadge status={p.status as any} />
-                    </td>
-                    <td className="px-5 py-3 w-36">
-                      <ReadinessBar value={p.readiness_pct} />
-                    </td>
-                    <td className="px-5 py-3">
-                      {/* Per-patient task counts aren't tracked in the backend
-                          yet — showing a dash is honest, not a fake number. */}
-                      <span className="text-[#7C8794] text-xs">—</span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <ChevronRightIcon />
-                    </td>
-                  </tr>
-                ))}
+                {sortedPatients.map((p) => {
+                  const followDays = p.follow_up_date ? daysUntil(p.follow_up_date) : null;
+                  const isOverdue = followDays !== null && followDays < 0;
+                  const isSoon = followDays !== null && followDays >= 0 && followDays <= 7;
+                  const trendLabel =
+                    p.measurement_trend === "growing" ? "▲ Growing"
+                    : p.measurement_trend === "shrinking" ? "▼ Shrinking"
+                    : p.measurement_trend === "stable" ? "● Stable"
+                    : null;
+                  const trendColor =
+                    p.measurement_trend === "growing" ? "text-amber-400"
+                    : p.measurement_trend === "shrinking" ? "text-emerald-400"
+                    : "text-[#8291A3]";
+                  return (
+                    <tr
+                      key={p.case_id}
+                      className="border-b border-[#0A0E14] hover:bg-[#0A0E14] cursor-pointer transition-colors"
+                      onClick={() => onNav("patient", p.case_id)}
+                    >
+                      <td className="px-4 py-3">
+                        <p className="text-[#E7ECF2] text-sm font-medium">{p.patient_name}</p>
+                        <p className="text-[#7C8794] text-[10px]">{p.diagnosis}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[11px] text-[#8B96A3]">{p.mrn}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[#C3CCD6] text-xs">{p.laterality ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={p.status as any} />
+                      </td>
+                      <td className="px-4 py-3 w-24">
+                        {p.imaging_pct === null ? (
+                          <span className="text-[#7C8794] text-xs">—</span>
+                        ) : (
+                          <ReadinessBar value={p.imaging_pct} />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 max-w-[180px]">
+                        {p.key_measurement ? (
+                          <>
+                            <p className="text-[#C3CCD6] text-xs truncate" title={p.key_measurement}>{p.key_measurement}</p>
+                            {trendLabel && <p className={`text-[10px] ${trendColor}`}>{trendLabel}</p>}
+                          </>
+                        ) : (
+                          <span className="text-[#7C8794] text-xs italic">Not recorded</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {p.follow_up_date ? (
+                          <>
+                            <p className={`text-xs font-medium ${isOverdue ? "text-red-400" : isSoon ? "text-amber-400" : "text-[#C3CCD6]"}`}>
+                              {isOverdue ? `Overdue ${Math.abs(followDays!)}d` : followDays === 0 ? "Today" : `In ${followDays}d`}
+                            </p>
+                            <p className="text-[#7C8794] text-[10px]">{p.follow_up_date}</p>
+                          </>
+                        ) : (
+                          <span className="text-[#7C8794] text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 w-32">
+                        <ReadinessBar value={p.readiness_pct} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <ChevronRightIcon />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </Card>
@@ -1203,6 +1312,13 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
             >
               <ClipboardIcon size={14} />
               Case Readiness
+            </button>
+            <button
+              onClick={() => onNav("case-packet")}
+              className="flex items-center gap-2 border border-[#232A34] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#0A0E14] transition-colors"
+            >
+              <ScanIcon size={14} />
+              Case Packet
             </button>
             <button
               onClick={() => onNav("tumor-board")}
@@ -2913,6 +3029,243 @@ function ImagingScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
   );
 }
 
+// 5b. CASE PACKET
+// A single printable page assembling everything a clinician currently
+// gathers by hand before presenting a case — the current measurement
+// and its trend, one representative image per imaging study, readiness
+// status, and the recorded treatment/follow-up plan. This is the direct
+// answer to "I bring important cross-sections into my Epic note — what
+// does this give me over that": one button instead of that manual work.
+type CasePacket = {
+  case_id: string;
+  patient_name: string;
+  mrn: string;
+  dob: string | null;
+  laterality: string | null;
+  diagnosis: string | null;
+  disease_profile: string;
+  care_stage: string;
+  generated_at: string;
+  readiness_pct: number;
+  ready_for_review: boolean;
+  missing_information: string[];
+  checklist: { key: string; field: string; category: string; status: string; required: boolean; value: string | null; source: string | null }[];
+  measurement: {
+    value: string | null;
+    method: string | null;
+    precision: string | null;
+    length_type: string | null;
+    basal_diameter_mm: number | null;
+    apical_height_mm: number | null;
+    recorded_at: string | null;
+    trend: "growing" | "shrinking" | "stable" | null;
+  } | null;
+  decision: {
+    recommendation: string;
+    rationale: string | null;
+    next_step: string | null;
+    responsible_provider: string | null;
+    follow_up_date: string | null;
+    surveillance_protocol: string | null;
+    recorded_at: string | null;
+  } | null;
+  key_images: { field_key: string; field_label: string; image_id: string; filename: string; total_in_study: number }[];
+};
+
+function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
+  const [packet, setPacket] = useState<CasePacket | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPacket(null);
+    setLoadError(null);
+    apiFetch(`${API_BASE}/cases/${caseId}/packet`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Couldn't load this case's packet.");
+        return res.json();
+      })
+      .then((data) => setPacket(data))
+      .catch((err) => setLoadError(err.message));
+  }, [caseId]);
+
+  const trendLabel =
+    packet?.measurement?.trend === "growing" ? "▲ Growing since last measurement"
+    : packet?.measurement?.trend === "shrinking" ? "▼ Shrinking since last measurement"
+    : packet?.measurement?.trend === "stable" ? "● Stable since last measurement"
+    : null;
+  const trendColor =
+    packet?.measurement?.trend === "growing" ? "text-amber-400"
+    : packet?.measurement?.trend === "shrinking" ? "text-emerald-400"
+    : "text-[#8291A3]";
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <TopBar
+        title="Case Packet"
+        subtitle={packet ? `${packet.patient_name} · ${packet.mrn}` : "Loading…"}
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNav("patient")}
+              className="border border-[#232A34] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#0A0E14] transition-colors"
+            >
+              Back to Patient
+            </button>
+            <button
+              onClick={() => window.print()}
+              disabled={!packet}
+              className="bg-[#0F2D56] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-50"
+            >
+              Print / Save as PDF
+            </button>
+          </div>
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+        {loadError && (
+          <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2 mb-4">{loadError}</p>
+        )}
+        {!packet && !loadError && <p className="text-[#8291A3] text-sm">Assembling case packet…</p>}
+
+        {packet && (
+          <div className="max-w-3xl mx-auto space-y-4">
+            {/* Header */}
+            <Card className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-[#E7ECF2]">{packet.patient_name}</h2>
+                  <p className="text-sm text-[#8B96A3] mt-0.5">
+                    MRN {packet.mrn}
+                    {packet.dob ? ` · DOB ${packet.dob}` : ""}
+                    {packet.laterality ? ` · ${packet.laterality}` : ""}
+                  </p>
+                  <p className="text-sm text-[#C3CCD6] mt-1">{packet.diagnosis ?? "No diagnosis on file"}</p>
+                  <p className="text-xs text-[#8291A3] mt-1">{packet.disease_profile} · {packet.care_stage}</p>
+                </div>
+                <div className="text-right">
+                  <StatusBadge status={packet.ready_for_review ? "complete" : packet.readiness_pct >= 70 ? "warning" : "missing"} />
+                  <p className="text-xs text-[#8B96A3] mt-1">{packet.readiness_pct}% ready</p>
+                </div>
+              </div>
+              {!packet.ready_for_review && packet.missing_information.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-[#232A34]">
+                  <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Still missing</p>
+                  <p className="text-xs text-amber-400">{packet.missing_information.join(", ")}</p>
+                </div>
+              )}
+              <p className="text-[10px] text-[#7C8794] mt-3">
+                Generated {new Date(packet.generated_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+              </p>
+            </Card>
+
+            {/* Current measurement */}
+            <Card className="p-5">
+              <SectionHeader>Current Measurement</SectionHeader>
+              {packet.measurement ? (
+                <div>
+                  <p className="text-sm text-[#C3CCD6]">{packet.measurement.value}</p>
+                  {trendLabel && <p className={`text-xs mt-1 font-medium ${trendColor}`}>{trendLabel}</p>}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {packet.measurement.method && (
+                      <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">Method: {packet.measurement.method}</span>
+                    )}
+                    {packet.measurement.precision && (
+                      <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">Precision: {packet.measurement.precision}</span>
+                    )}
+                    {packet.measurement.length_type && (
+                      <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">{packet.measurement.length_type}</span>
+                    )}
+                  </div>
+                  {packet.measurement.recorded_at && (
+                    <p className="text-[10px] text-[#7C8794] mt-2">
+                      Recorded {new Date(packet.measurement.recorded_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-[#7C8794] italic">Not yet recorded for this patient.</p>
+              )}
+            </Card>
+
+            {/* Key images — one representative slice per study */}
+            <Card className="p-5">
+              <SectionHeader>Key Images</SectionHeader>
+              {packet.key_images.length === 0 ? (
+                <p className="text-xs text-[#7C8794] italic">No images uploaded for this case yet.</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {packet.key_images.map((img) => (
+                    <div key={img.field_key}>
+                      <AuthenticatedImage
+                        caseId={caseId}
+                        imageId={img.image_id}
+                        alt={img.field_label}
+                        className="w-full h-32 object-cover rounded border border-[#232A34]"
+                      />
+                      <p className="text-xs text-[#C3CCD6] mt-1">{img.field_label}</p>
+                      {img.total_in_study > 1 && (
+                        <p className="text-[10px] text-[#7C8794]">1 of {img.total_in_study} images — see full series in Imaging</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Treatment / follow-up plan */}
+            <Card className="p-5">
+              <SectionHeader>Treatment &amp; Follow-up Plan</SectionHeader>
+              {packet.decision ? (
+                <div className="space-y-1.5">
+                  <p className="text-sm text-[#E7ECF2] font-medium">{packet.decision.recommendation}</p>
+                  {packet.decision.rationale && <p className="text-xs text-[#C3CCD6]">{packet.decision.rationale}</p>}
+                  {packet.decision.next_step && (
+                    <p className="text-xs text-[#8B96A3]">Next step: {packet.decision.next_step}</p>
+                  )}
+                  {packet.decision.responsible_provider && (
+                    <p className="text-xs text-[#8B96A3]">Responsible: {packet.decision.responsible_provider}</p>
+                  )}
+                  {packet.decision.surveillance_protocol && (
+                    <p className="text-xs text-[#8B96A3]">Surveillance protocol: {packet.decision.surveillance_protocol}</p>
+                  )}
+                  {packet.decision.follow_up_date && (
+                    <p className="text-xs font-medium text-[#0EA5E9]">Follow-up due {packet.decision.follow_up_date}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-[#7C8794] italic">No decision recorded yet for this case.</p>
+              )}
+            </Card>
+
+            {/* Full checklist */}
+            <Card>
+              <div className="px-5 py-4 border-b border-[#161B22]">
+                <SectionHeader>Full Checklist</SectionHeader>
+              </div>
+              <table className="w-full">
+                <tbody className="divide-y divide-[#0A0E14]">
+                  {packet.checklist.map((c) => (
+                    <tr key={c.key}>
+                      <td className="px-5 py-2.5">
+                        <p className="text-xs text-[#E7ECF2]">{c.field}</p>
+                        {c.value && <p className="text-[10px] text-[#8291A3]">{c.value}</p>}
+                      </td>
+                      <td className="px-5 py-2.5 text-right">
+                        <StatusBadge status={(c.required ? c.status : "optional") as any} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // 6. TUMOR BOARD (CASE SUMMARY)
 function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
   // Same live-fetch pattern as the other screens — now pulling the full
@@ -3848,8 +4201,8 @@ export default function App() {
   // site once you've gone back past the app's own starting point. That's
   // the same behavior any normal website has; this app just never wrote
   // to history before, so the browser had nothing to step through.
-  const SCREENS_NEEDING_CASE_ID: Screen[] = ["patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision"];
-  const ALL_SCREENS: Screen[] = ["disease-select", "dashboard", "patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision", "patient-pathway", "settings"];
+  const SCREENS_NEEDING_CASE_ID: Screen[] = ["patient", "case-readiness", "imaging", "case-packet", "tumor-board", "tumor-board-decision"];
+  const ALL_SCREENS: Screen[] = ["disease-select", "dashboard", "patient", "case-readiness", "imaging", "case-packet", "tumor-board", "tumor-board-decision", "patient-pathway", "settings"];
 
   const encodeHash = (s: Screen, caseId: string) =>
     SCREENS_NEEDING_CASE_ID.includes(s) ? `#${s}/${caseId}` : `#${s}`;
@@ -3984,11 +4337,12 @@ export default function App() {
             {screen === "patient" && <PatientScreen onNav={handleNav} caseId={selectedCaseId} />}
             {screen === "case-readiness" && <CaseReadinessScreen onNav={handleNav} caseId={selectedCaseId} />}
             {screen === "imaging" && <ImagingScreen onNav={handleNav} caseId={selectedCaseId} />}
+            {screen === "case-packet" && <CasePacketScreen onNav={handleNav} caseId={selectedCaseId} />}
             {screen === "tumor-board" && <TumorBoardScreen onNav={handleNav} caseId={selectedCaseId} />}
             {screen === "tumor-board-decision" && <TumorBoardDecisionScreen onNav={handleNav} caseId={selectedCaseId} />}
           </>
         ) : (
-          ["patient", "case-readiness", "imaging", "tumor-board", "tumor-board-decision"].includes(screen) && (
+          ["patient", "case-readiness", "imaging", "case-packet", "tumor-board", "tumor-board-decision"].includes(screen) && (
             <div className="flex-1 flex items-center justify-center bg-[#0A0E14]">
               <p className="text-[#8291A3] text-sm">Loading a patient case…</p>
             </div>
