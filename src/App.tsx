@@ -235,13 +235,17 @@ function TopBar({ title, subtitle, action }: { title: string; subtitle?: string;
   );
 }
 
-function StatusBadge({ status }: { status: "complete" | "missing" | "pending" | "warning" | "active" }) {
+function StatusBadge({ status }: { status: "complete" | "missing" | "pending" | "warning" | "active" | "optional" }) {
   const map = {
     complete: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
     missing: "bg-red-500/10 text-red-300 border-red-500/30",
     pending: "bg-amber-500/10 text-amber-300 border-amber-500/30",
     warning: "bg-orange-500/10 text-orange-300 border-orange-500/30",
     active: "bg-sky-500/10 text-sky-300 border-sky-500/30",
+    // Neutral, non-alarming — for fields that are tracked but were never
+    // supposed to count against (or look like they're blocking) readiness,
+    // like Date of Surgery on a patient who hasn't been treated yet.
+    optional: "bg-[#161B22] text-[#8291A3] border-[#232A34]",
   };
   const labels = {
     complete: "Complete",
@@ -249,6 +253,7 @@ function StatusBadge({ status }: { status: "complete" | "missing" | "pending" | 
     pending: "Pending",
     warning: "Needs Review",
     active: "Active",
+    optional: "Not Recorded",
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium ${map[status]}`}>
@@ -1158,7 +1163,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
   const [readinessSummary, setReadinessSummary] = useState<{
     readiness_pct: number;
     missing_information: string[];
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
   } | null>(null);
 
   useEffect(() => {
@@ -1475,7 +1480,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                           <p className="text-sm font-medium text-[#E7ECF2]">{item.field}</p>
                           <p className="text-xs text-[#8B96A3]">{item.source ?? "Not yet ordered"}</p>
                         </div>
-                        <StatusBadge status={item.status as any} />
+                        <StatusBadge status={item.required === false && item.status !== "complete" ? "optional" : item.status as any} />
                       </div>
                       <p className="text-xs text-[#C3CCD6] mt-2">
                         {item.value ?? "Not yet recorded for this patient."}
@@ -1534,7 +1539,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
     ready_for_review: boolean;
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
     missing_information: string[];
   } | null>(null);
 
@@ -1914,7 +1919,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                           </div>
                         )}
                       </div>
-                      <StatusBadge status={item.status as any} />
+                      <StatusBadge status={item.required === false && item.status !== "complete" ? "optional" : item.status as any} />
                       {resolveFormKey !== item.key && confirmingDeleteKey !== item.key && (
                         <button
                           onClick={() => openResolveForm(item.key, item)}
@@ -2091,14 +2096,20 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
 // endpoint in this app — including image serving — correctly requires one.
 // This component fetches the image bytes through apiFetch like everything
 // else, then hands the browser a local object URL to actually display it.
-function AuthenticatedImage({ caseId, fieldKey, alt, className }: { caseId: string; fieldKey: string; alt: string; className?: string }) {
+function AuthenticatedImage({ caseId, fieldKey, imageId, alt, className }: { caseId: string; fieldKey?: string; imageId?: string; alt: string; className?: string }) {
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
     let objectUrl: string | null = null;
     let cancelled = false;
 
-    apiFetch(`${API_BASE}/cases/${caseId}/images/${fieldKey}`)
+    // One specific image when an id is given; otherwise the first image
+    // of the study, which is what a plain thumbnail wants.
+    const url = imageId
+      ? `${API_BASE}/cases/${caseId}/images/by-id/${imageId}`
+      : `${API_BASE}/cases/${caseId}/images/${fieldKey}`;
+
+    apiFetch(url)
       .then((res) => {
         if (!res.ok) throw new Error("No image");
         return res.blob();
@@ -2114,18 +2125,262 @@ function AuthenticatedImage({ caseId, fieldKey, alt, className }: { caseId: stri
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [caseId, fieldKey]);
+  }, [caseId, fieldKey, imageId]);
 
   if (!src) return null;
   return <img src={src} alt={alt} className={className} />;
 }
 
+// One entry per uploaded image. A study (e.g. an OCT series) is several
+// of these sharing a field_key, in viewing order.
+type StudyImage = { id: string; field_key: string; filename: string; position: number; uploaded_at: string | null };
+
+const MAX_IMAGES_PER_STUDY = 60; // keep in step with the backend's limit
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1]); // strip the "data:image/png;base64," prefix
+    reader.onerror = () => reject(new Error("Couldn't read that file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+// Full-screen viewer for ONE study's images. Real OCT, CT and similar
+// studies are dozens of slices a clinician scrolls up and down through —
+// a single still doesn't show the finding — so this steps through every
+// image in the study: mouse wheel, arrow keys, the on-screen buttons, or
+// the slider. Neighbouring slices are fetched ahead of time so stepping
+// feels instant instead of waiting on the network for each one.
+function SeriesViewer({ caseId, label, images, startIndex, onClose, onDeleteImage }: {
+  caseId: string;
+  label: string;
+  images: StudyImage[];
+  startIndex: number;
+  onClose: () => void;
+  onDeleteImage: (imageId: string) => Promise<void>;
+}) {
+  const total = images.length;
+  const [index, setIndex] = useState(startIndex);
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [failed, setFailed] = useState<Record<string, boolean>>({});
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const objectUrls = useRef<Record<string, string>>({});
+  const requested = useRef<Set<string>>(new Set());
+  const alive = useRef(true);
+  const wheelAccum = useRef(0);
+
+  // After a delete the list shrinks — never point past its end.
+  const current = Math.max(0, Math.min(index, total - 1));
+  const shown = images[current];
+
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      Object.values(objectUrls.current).forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, []);
+
+  const load = (id: string) => {
+    if (requested.current.has(id)) return;
+    requested.current.add(id);
+    apiFetch(`${API_BASE}/cases/${caseId}/images/by-id/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Couldn't load image");
+        return res.blob();
+      })
+      .then((blob) => {
+        if (!alive.current) return;
+        const url = URL.createObjectURL(blob);
+        objectUrls.current[id] = url;
+        setUrls((prev) => ({ ...prev, [id]: url }));
+        setFailed((prev) => ({ ...prev, [id]: false }));
+      })
+      .catch(() => {
+        requested.current.delete(id); // allow a retry the next time this slice is visited
+        if (alive.current) setFailed((prev) => ({ ...prev, [id]: true }));
+      });
+  };
+
+  // The slice on screen first, then the ones around it.
+  const idKey = images.map((i) => i.id).join(",");
+  useEffect(() => {
+    [current, current + 1, current - 1, current + 2].forEach((i) => {
+      if (images[i]) load(images[i].id);
+    });
+  }, [current, idKey]);
+
+  // If the last image in the study was deleted, there's nothing left to view.
+  useEffect(() => {
+    if (total === 0) onClose();
+  }, [total]);
+
+  const goTo = (i: number) => {
+    setConfirmingDelete(false);
+    setDeleteError(null);
+    setIndex(Math.max(0, Math.min(total - 1, i)));
+  };
+  const go = (delta: number) => goTo(current + delta);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if ((e.target as HTMLElement | null)?.tagName === "INPUT") return; // the slider handles its own arrow keys
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); go(1); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); go(-1); }
+      else if (e.key === "Home") { e.preventDefault(); goTo(0); }
+      else if (e.key === "End") { e.preventDefault(); goTo(total - 1); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [current, total, onClose]);
+
+  // Mouse wheel / trackpad scroll steps through the slices. Attached
+  // natively (not as a React prop) so it can stop the page behind the
+  // viewer from scrolling at the same time.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      wheelAccum.current += e.deltaY;
+      if (Math.abs(wheelAccum.current) >= 60) {
+        go(wheelAccum.current > 0 ? 1 : -1);
+        wheelAccum.current = 0;
+      }
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [current, total]);
+
+  if (total === 0 || !shown) return null;
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await onDeleteImage(shown.id);
+    } catch {
+      setDeleteError("Couldn't delete that image. Please try again.");
+    } finally {
+      setIsDeleting(false);
+      setConfirmingDelete(false);
+    }
+  };
+
+  return (
+    <div ref={rootRef} className="fixed inset-0 bg-black/90 z-50 flex flex-col" role="dialog" aria-label={`${label} images`}>
+      <div className="flex items-center justify-between gap-4 px-6 py-3 border-b border-white/10 shrink-0">
+        <div className="min-w-0">
+          <p className="text-white text-sm font-medium">{label}</p>
+          <p className="text-white/50 text-xs truncate">{shown.filename}</p>
+        </div>
+        <div className="flex items-center gap-4 shrink-0">
+          <span className="text-white/80 text-sm font-mono">{current + 1} / {total}</span>
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white text-sm border border-white/30 rounded px-3 py-1"
+          >
+            Close ✕
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 flex items-center justify-center gap-4 px-4 py-4 overflow-hidden">
+        <button
+          onClick={() => go(-1)}
+          disabled={current === 0}
+          aria-label="Previous image"
+          className="w-10 h-10 shrink-0 rounded-full border border-white/30 text-white text-lg hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent"
+        >
+          ‹
+        </button>
+        <div className="flex-1 min-w-0 self-stretch flex items-center justify-center">
+          {urls[shown.id] ? (
+            <img
+              src={urls[shown.id]}
+              alt={`${label} — image ${current + 1} of ${total}`}
+              draggable={false}
+              className="max-w-full object-contain rounded border border-white/20 select-none"
+              style={{ maxHeight: "calc(100vh - 220px)" }}
+            />
+          ) : failed[shown.id] ? (
+            <p className="text-red-300 text-sm">Couldn't load this image.</p>
+          ) : (
+            <p className="text-white/50 text-sm">Loading…</p>
+          )}
+        </div>
+        <button
+          onClick={() => go(1)}
+          disabled={current === total - 1}
+          aria-label="Next image"
+          className="w-10 h-10 shrink-0 rounded-full border border-white/30 text-white text-lg hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent"
+        >
+          ›
+        </button>
+      </div>
+
+      <div className="shrink-0 border-t border-white/10 px-6 py-3 space-y-2">
+        {total > 1 && (
+          <input
+            type="range"
+            min={0}
+            max={total - 1}
+            value={current}
+            onChange={(e) => goTo(Number(e.target.value))}
+            aria-label="Scrub through images"
+            className="w-full accent-[#0EA5E9]"
+          />
+        )}
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-white/40 text-[11px]">
+            {total > 1 ? "Scroll, use the arrow keys, or drag the slider to move through the images. Esc closes." : "Esc closes."}
+          </p>
+          {confirmingDelete ? (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs text-white/80">Delete image {current + 1} of {total}?</span>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="text-xs font-medium text-white bg-red-500 px-2 py-1 rounded hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? "…" : "Yes, delete"}
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="text-xs text-white/60 hover:text-white"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="text-xs text-red-400 hover:underline shrink-0"
+            >
+              Delete this image
+            </button>
+          )}
+        </div>
+        {deleteError && <p className="text-xs text-red-300">{deleteError}</p>}
+      </div>
+    </div>
+  );
+}
+
 function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
-  // Which uploaded image (if any) is currently shown full-size in the
-  // enlarge overlay — addresses real clinical feedback that a tiny
-  // thumbnail and text description aren\'t enough to actually review an
-  // image; clicking it now opens a large, genuinely readable view.
-  const [enlargedImage, setEnlargedImage] = useState<{ fieldKey: string; label: string } | null>(null);
+  // Which study's images are open in the full-screen viewer, and which
+  // slice it opened on. A study can hold many images — a real OCT or CT
+  // series is dozens of slices you scroll through, not one snapshot — so
+  // this opens a viewer you step through rather than a single picture.
+  const [viewer, setViewer] = useState<{ fieldKey: string; label: string; index: number } | null>(null);
 
   // Same live-fetch pattern as the other screens — pulling the full
   // checklist so both the imaging table AND the measurements card below
@@ -2138,13 +2393,17 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   // button shows a brief loading state.
   const [orderingKey, setOrderingKey] = useState<string | null>(null);
 
-  // Which fields have a real uploaded image — just filenames/dates, not
-  // the image data itself, so this list stays lightweight.
-  const [uploadedImages, setUploadedImages] = useState<
-    { field_key: string; filename: string; uploaded_at: string | null }[]
-  >([]);
+  // Every uploaded image, one entry each (a 24-slice study appears 24
+  // times) — just ids, filenames and order, not the image data itself,
+  // so this list stays lightweight.
+  const [uploadedImages, setUploadedImages] = useState<StudyImage[]>([]);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{ key: string; done: number; total: number } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // One study's images, in viewing order.
+  const imagesForStudy = (fieldKey: string) =>
+    uploadedImages.filter((img) => img.field_key === fieldKey).sort((a, b) => a.position - b.position);
 
   // Real measurement history — every past recording of tumor size, not
   // just the single most recent value. This is what lets growth be
@@ -2161,61 +2420,75 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
       .catch((err) => console.error("Couldn't reach backend:", err));
   };
 
-  const loadImageList = () => {
+  const loadImageList = () =>
     apiFetch(`${API_BASE}/cases/${caseId}/images`)
-      .then((res) => res.json())
-      .then((data) => setUploadedImages(data))
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setUploadedImages(Array.isArray(data) ? data : []))
       .catch((err) => console.error("Couldn't reach backend:", err));
-  };
 
-  // Reads the chosen file as base64 in the browser, then sends it up —
-  // this is what makes "upload a real image" actually real, instead of
-  // the app only ever showing text descriptions of a study.
-  const handleImageUpload = (fieldKey: string, file: File) => {
+  // Uploads one or many images to a study. Files are sorted by name the
+  // way a person would ("slice_2" before "slice_10") and sent one at a
+  // time, so a series exported as slice_001, slice_002, ... lands in the
+  // right order. The whole batch is checked up front so a series never
+  // ends up half-uploaded because of a file that was never going to work.
+  const handleImageUpload = async (fieldKey: string, fileList: File[]) => {
     setUploadError(null);
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Please choose an image file.");
+    const files = [...fileList].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" })
+    );
+
+    const notImage = files.find((f) => !f.type.startsWith("image/"));
+    if (notImage) {
+      setUploadError(`"${notImage.name}" isn't an image file — nothing was uploaded.`);
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setUploadError("Image must be under 8MB.");
+    const tooBig = files.find((f) => f.size > 8 * 1024 * 1024);
+    if (tooBig) {
+      setUploadError(`"${tooBig.name}" is over 8MB — nothing was uploaded.`);
       return;
     }
+    const alreadyThere = imagesForStudy(fieldKey).length;
+    if (alreadyThere + files.length > MAX_IMAGES_PER_STUDY) {
+      setUploadError(
+        `A study can hold up to ${MAX_IMAGES_PER_STUDY} images. This one has ${alreadyThere}, so you can add ${Math.max(0, MAX_IMAGES_PER_STUDY - alreadyThere)} more — nothing was uploaded.`
+      );
+      return;
+    }
+
     setUploadingKey(fieldKey);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const base64 = dataUrl.split(",")[1]; // strip the "data:image/png;base64," prefix
-      apiFetch(`${API_BASE}/cases/${caseId}/images`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          field_key: fieldKey,
-          filename: file.name,
-          content_type: file.type,
-          data_base64: base64,
-        }),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.detail || "Upload failed.");
-          }
-          loadImageList();
-        })
-        .catch((err) => setUploadError(err.message))
-        .finally(() => setUploadingKey(null));
-    };
-    reader.onerror = () => {
-      setUploadError("Couldn't read that file.");
+    let done = 0;
+    try {
+      for (const file of files) {
+        setUploadProgress({ key: fieldKey, done, total: files.length });
+        const base64 = await readFileAsBase64(file);
+        const res = await apiFetch(`${API_BASE}/cases/${caseId}/images`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            field_key: fieldKey,
+            filename: file.name,
+            content_type: file.type,
+            data_base64: base64,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail || "Upload failed.");
+        }
+        done += 1;
+      }
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "Upload failed.";
+      setUploadError(`Uploaded ${done} of ${files.length}. Stopped at "${files[done]?.name}": ${reason}`);
+    } finally {
+      setUploadProgress(null);
       setUploadingKey(null);
-    };
-    reader.readAsDataURL(file);
+      loadImageList();
+    }
   };
 
-  // Removes an uploaded image outright — previously the only option was
-  // to overwrite it with a new file, with no way to just remove a wrong
-  // or unwanted one.
+  // Removes uploaded images. "Delete all" clears a whole study; the
+  // viewer's "Delete this image" removes just one slice.
   const [confirmingImageDeleteKey, setConfirmingImageDeleteKey] = useState<string | null>(null);
   const [deletingImageKey, setDeletingImageKey] = useState<string | null>(null);
 
@@ -2229,6 +2502,12 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
       })
       .catch((err) => console.error("Couldn't delete image:", err))
       .finally(() => setDeletingImageKey(null));
+  };
+
+  const handleDeleteOneImage = async (imageId: string) => {
+    const res = await apiFetch(`${API_BASE}/cases/${caseId}/images/by-id/${imageId}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Delete failed");
+    await loadImageList();
   };
 
   const loadImaging = () => {
@@ -2356,7 +2635,8 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
           </thead>
           <tbody className="divide-y divide-[#0A0E14]">
             {imagingItems.map((s) => {
-              const hasImage = uploadedImages.some((img) => img.field_key === s.key);
+              const studyImages = imagesForStudy(s.key);
+              const hasImage = studyImages.length > 0;
               return (
               <tr key={s.key} className={`${s.status === "missing" ? "bg-red-500/10/40" : s.status === "pending" ? "bg-amber-500/10/30" : "hover:bg-[#0A0E14]"} transition-colors`}>
                 <td className="px-5 py-3.5">
@@ -2368,31 +2648,41 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                 <td className="px-5 py-3.5">
                   {hasImage ? (
                     <button
-                      onClick={() => setEnlargedImage({ fieldKey: s.key, label: s.field })}
-                      className="block hover:opacity-80 hover:ring-2 hover:ring-[#0EA5E9] rounded transition-all"
-                      title="Click to view full size"
+                      onClick={() => setViewer({ fieldKey: s.key, label: s.field, index: 0 })}
+                      className="relative inline-block w-28 h-28 hover:opacity-80 hover:ring-2 hover:ring-[#0EA5E9] rounded transition-all"
+                      title={studyImages.length > 1 ? `Open all ${studyImages.length} images` : "Click to view full size"}
                     >
                       <AuthenticatedImage
                         caseId={caseId}
-                        fieldKey={s.key}
+                        imageId={studyImages[0].id}
                         alt={`${s.field} image`}
                         className="w-28 h-28 object-cover rounded border border-[#232A34]"
                       />
+                      {studyImages.length > 1 && (
+                        <span className="absolute bottom-1 right-1 text-[10px] font-mono bg-black/75 text-white px-1.5 py-0.5 rounded">
+                          {studyImages.length} images
+                        </span>
+                      )}
                     </button>
                   ) : (
                     <span className="text-[10px] text-[#7C8794] italic">No image</span>
                   )}
                   <label className="block mt-1 text-[10px] text-[#0EA5E9] hover:underline cursor-pointer">
-                    {uploadingKey === s.key ? "Uploading…" : hasImage ? "Replace" : "Upload"}
+                    {uploadingKey === s.key
+                      ? uploadProgress && uploadProgress.key === s.key
+                        ? `Uploading ${Math.min(uploadProgress.done + 1, uploadProgress.total)} of ${uploadProgress.total}…`
+                        : "Uploading…"
+                      : hasImage ? "Add images" : "Upload images"}
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="bg-[#12161D] hidden"
                       disabled={uploadingKey === s.key}
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(s.key, file);
-                        e.target.value = ""; // allow re-selecting the same file later
+                        const files = Array.from(e.target.files ?? []);
+                        if (files.length > 0) handleImageUpload(s.key, files);
+                        e.target.value = ""; // allow re-selecting the same files later
                       }}
                     />
                   </label>
@@ -2401,12 +2691,12 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                       onClick={() => setConfirmingImageDeleteKey(s.key)}
                       className="block mt-0.5 text-[10px] text-red-400 hover:underline"
                     >
-                      Delete
+                      {studyImages.length > 1 ? "Delete all" : "Delete"}
                     </button>
                   )}
                   {confirmingImageDeleteKey === s.key && (
                     <div className="mt-1 flex items-center gap-1.5">
-                      <span className="text-[10px] text-[#C3CCD6]">Sure?</span>
+                      <span className="text-[10px] text-[#C3CCD6]">{studyImages.length > 1 ? `Delete all ${studyImages.length}?` : "Sure?"}</span>
                       <button
                         onClick={() => handleDeleteImage(s.key)}
                         disabled={deletingImageKey === s.key}
@@ -2526,33 +2816,17 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
         )}
       </Card>
 
-      {/* Full-size image overlay — real clinical feedback was that a
-          tiny thumbnail and a text description aren't enough to
-          actually review an image. Click any thumbnail above to open
-          it here, large enough to genuinely read. */}
-      {enlargedImage && (
-        <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-8"
-          onClick={() => setEnlargedImage(null)}
-        >
-          <div className="max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-white text-sm font-medium">{enlargedImage.label}</p>
-              <button
-                onClick={() => setEnlargedImage(null)}
-                className="text-white/70 hover:text-white text-sm border border-white/30 rounded px-3 py-1"
-              >
-                Close ✕
-              </button>
-            </div>
-            <AuthenticatedImage
-              caseId={caseId}
-              fieldKey={enlargedImage.fieldKey}
-              alt={enlargedImage.label}
-              className="max-w-full max-h-[80vh] object-contain rounded border border-white/20"
-            />
-          </div>
-        </div>
+      {/* Full-screen image viewer — opens on the study you clicked and
+          steps through every image in it. */}
+      {viewer && (
+        <SeriesViewer
+          caseId={caseId}
+          label={viewer.label}
+          images={imagesForStudy(viewer.fieldKey)}
+          startIndex={viewer.index}
+          onClose={() => setViewer(null)}
+          onDeleteImage={handleDeleteOneImage}
+        />
       )}
     </div>
   );
@@ -2588,7 +2862,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
   // genuinely generated from real data for whichever patient this is.
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null }[];
+    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
     missing_information: string[];
   } | null>(null);
   const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string; diagnosis: string | null; laterality: string | null } | null>(null);
