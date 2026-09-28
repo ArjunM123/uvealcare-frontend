@@ -2400,6 +2400,9 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<{ key: string; done: number; total: number } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Separate loading key for DICOM/PDF import — a different upload path
+  // (multipart file upload, not base64 JSON) with its own in-flight state.
+  const [importingKey, setImportingKey] = useState<string | null>(null);
 
   // One study's images, in viewing order.
   const imagesForStudy = (fieldKey: string) =>
@@ -2483,6 +2486,47 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
     } finally {
       setUploadProgress(null);
       setUploadingKey(null);
+      loadImageList();
+    }
+  };
+
+  // Imports a single DICOM (.dcm) file exported from a vendor system
+  // (Heidelberg, Optos, Visage) or a vendor PDF report, and hands it to
+  // the backend to convert into image(s) for this study — a multi-frame
+  // DICOM or multi-page PDF becomes a multi-slide study automatically,
+  // no different from any other upload once it lands.
+  const handleImportFile = async (fieldKey: string, file: File) => {
+    setUploadError(null);
+    const lower = file.name.toLowerCase();
+    if (!lower.endsWith(".dcm") && !lower.endsWith(".dicom") && !lower.endsWith(".pdf")) {
+      setUploadError(`"${file.name}" isn't a .dcm or .pdf file — nothing was imported.`);
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      setUploadError(`"${file.name}" is over 25MB — nothing was imported.`);
+      return;
+    }
+
+    setImportingKey(fieldKey);
+    try {
+      const form = new FormData();
+      form.append("field_key", fieldKey);
+      form.append("file", file);
+      // No Content-Type header here on purpose — the browser sets the
+      // correct multipart boundary itself when the body is a FormData.
+      const res = await apiFetch(`${API_BASE}/cases/${caseId}/images/import`, {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Import failed.");
+      }
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "Import failed.";
+      setUploadError(reason);
+    } finally {
+      setImportingKey(null);
       loadImageList();
     }
   };
@@ -2683,6 +2727,20 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                         const files = Array.from(e.target.files ?? []);
                         if (files.length > 0) handleImageUpload(s.key, files);
                         e.target.value = ""; // allow re-selecting the same files later
+                      }}
+                    />
+                  </label>
+                  <label className="block mt-0.5 text-[10px] text-[#0EA5E9] hover:underline cursor-pointer">
+                    {importingKey === s.key ? "Importing…" : "Import DICOM/PDF"}
+                    <input
+                      type="file"
+                      accept=".dcm,.dicom,application/dicom,.pdf,application/pdf"
+                      className="bg-[#12161D] hidden"
+                      disabled={importingKey === s.key}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImportFile(s.key, file);
+                        e.target.value = ""; // allow re-selecting the same file later
                       }}
                     />
                   </label>
