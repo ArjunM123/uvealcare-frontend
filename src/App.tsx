@@ -702,6 +702,7 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
       measurement_trend: "growing" | "shrinking" | "stable" | null;
       follow_up_date: string | null;
       surveillance_protocol: string | null;
+      tfsom_risk_label: "Low" | "Moderate" | "High" | null;
     }[]
   >([]);
 
@@ -1045,6 +1046,15 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                       <td className="px-4 py-3">
                         <p className="text-[#E7ECF2] text-sm font-medium">{p.patient_name}</p>
                         <p className="text-[#7C8794] text-[10px]">{p.diagnosis}</p>
+                        {/* Flags which nevi are trending toward melanoma
+                            across the WHOLE population at a glance — the
+                            kind of disease-specific signal a generic EHR
+                            patient list has no way to surface. */}
+                        {(p.tfsom_risk_label === "Moderate" || p.tfsom_risk_label === "High") && (
+                          <p className={`text-[10px] font-medium mt-0.5 ${p.tfsom_risk_label === "High" ? "text-red-400" : "text-amber-400"}`}>
+                            ⚠ {p.tfsom_risk_label} growth risk (TFSOM)
+                          </p>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-[11px] text-[#8B96A3]">{p.mrn}</span>
@@ -1272,7 +1282,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
   const [readinessSummary, setReadinessSummary] = useState<{
     readiness_pct: number;
     missing_information: string[];
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
+    checklist: { key: string; field: string; category: string; data_type?: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
   } | null>(null);
 
   useEffect(() => {
@@ -1655,7 +1665,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
     ready_for_review: boolean;
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
+    checklist: { key: string; field: string; category: string; data_type?: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
     missing_information: string[];
   } | null>(null);
 
@@ -2019,7 +2029,9 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                       <div className="flex-1">
                         <p className="text-sm text-[#E7ECF2] font-medium">{item.field}</p>
                         {item.status === "complete" && item.value && (
-                          <p className="text-xs text-[#8B96A3] mt-1 leading-relaxed">{item.value}</p>
+                          <p className="text-xs text-[#8B96A3] mt-1 leading-relaxed">
+                            {item.data_type === "boolean" ? (item.value === "true" ? "Present" : "Absent") : item.value}
+                          </p>
                         )}
                         {item.status === "complete" && (item.measurement_method || item.measurement_precision || item.measurement_length_type) && (
                           <div className="flex flex-wrap gap-2 mt-1.5">
@@ -2091,7 +2103,37 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                           </select>
                         </div>
 
-                        {resolveStatus !== "missing" && (
+                        {/* Boolean fields (currently just the TFSOM-UHHD
+                            risk factors) get Present/Absent toggles
+                            instead of a free-text box — the finding IS
+                            the value, there's nothing else to type. */}
+                        {resolveStatus !== "missing" && item.data_type === "boolean" && (
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setResolveValue("true")}
+                              className={`flex-1 text-xs font-medium px-3 py-2 rounded border transition-colors ${
+                                resolveValue === "true"
+                                  ? "bg-amber-500/20 border-amber-500 text-amber-300"
+                                  : "border-[#2E3742] text-[#8B96A3] hover:bg-[#161B22]"
+                              }`}
+                            >
+                              Present
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setResolveValue("false")}
+                              className={`flex-1 text-xs font-medium px-3 py-2 rounded border transition-colors ${
+                                resolveValue === "false"
+                                  ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
+                                  : "border-[#2E3742] text-[#8B96A3] hover:bg-[#161B22]"
+                              }`}
+                            >
+                              Absent
+                            </button>
+                          </div>
+                        )}
+                        {resolveStatus !== "missing" && item.data_type !== "boolean" && (
                           <textarea
                             autoFocus
                             value={resolveValue}
@@ -3049,7 +3091,7 @@ type CasePacket = {
   readiness_pct: number;
   ready_for_review: boolean;
   missing_information: string[];
-  checklist: { key: string; field: string; category: string; status: string; required: boolean; value: string | null; source: string | null }[];
+  checklist: { key: string; field: string; category: string; data_type?: string; status: string; required: boolean; value: string | null; source: string | null }[];
   measurement: {
     value: string | null;
     method: string | null;
@@ -3070,6 +3112,15 @@ type CasePacket = {
     recorded_at: string | null;
   } | null;
   key_images: { field_key: string; field_label: string; image_id: string; filename: string; total_in_study: number }[];
+  tfsom_risk: {
+    factors_assessed: number;
+    factors_total: number;
+    factors_present: string[];
+    factor_count: number;
+    risk_label: "Low" | "Moderate" | "High";
+    risk_estimate: string;
+    mnemonic: string;
+  } | null;
 };
 
 function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
@@ -3158,6 +3209,14 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                 Generated {new Date(packet.generated_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
               </p>
             </Card>
+
+            {/* TFSOM-UHHD growth-risk score — only shown once at least one
+                of the 8 factors has actually been assessed, so a case
+                that hasn't had risk-factor documentation started yet
+                doesn't show a misleading "Low risk" badge. */}
+            {packet.tfsom_risk && (
+              <Card
+                className={`p-5 border-l-4 ${
 
             {/* Current measurement */}
             <Card className="p-5">
@@ -3249,7 +3308,11 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                     <tr key={c.key}>
                       <td className="px-5 py-2.5">
                         <p className="text-xs text-[#E7ECF2]">{c.field}</p>
-                        {c.value && <p className="text-[10px] text-[#8291A3]">{c.value}</p>}
+                        {c.value && (
+                          <p className="text-[10px] text-[#8291A3]">
+                            {c.data_type === "boolean" ? (c.value === "true" ? "Present" : "Absent") : c.value}
+                          </p>
+                        )}
                       </td>
                       <td className="px-5 py-2.5 text-right">
                         <StatusBadge status={(c.required ? c.status : "optional") as any} />
@@ -3273,7 +3336,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
   // genuinely generated from real data for whichever patient this is.
   const [readinessData, setReadinessData] = useState<{
     readiness_pct: number;
-    checklist: { key: string; field: string; category: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
+    checklist: { key: string; field: string; category: string; data_type?: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
     missing_information: string[];
   } | null>(null);
   const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string; diagnosis: string | null; laterality: string | null } | null>(null);
