@@ -1,3 +1,5 @@
+// uvealcare: placeholder content removed
+// uvealcare-theme: light-clinical
 import { useState, useEffect, useRef } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -116,33 +118,19 @@ function EyeIcon({ size = 14 }: { size?: number }) {
   );
 }
 
-// A single deliberate hero moment for the login screen — rather than
-// spinning the whole icon (which reads as a generic loading spinner),
-// the pupil slowly orbits within the eye, like it's watching. This is
-// the only animated icon in the app; everywhere else uses the plain
-// static EyeIcon, on purpose.
-function AnimatedEyeIcon({ size = 16 }: { size?: number }) {
+function XIcon({ size = 14 }: { size?: number }) {
   return (
-    <>
-      <style>{`
-        @keyframes uvealcare-pupil-orbit {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" />
-        <g
-          style={{
-            transformOrigin: "8px 8px",
-            transformBox: "fill-box",
-            animation: "uvealcare-pupil-orbit 3s linear infinite",
-          }}
-        >
-          <circle cx="8" cy="5.3" r="1.6" />
-        </g>
-      </svg>
-    </>
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function ClockIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 4.5V8l2.5 1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 function ChevronRightIcon({ size = 12 }: { size?: number }) {
@@ -164,26 +152,21 @@ function getInitials(name: string): string {
 }
 
 function Sidebar({ active, onNav, user, onSwitchWorkflow }: { active: Screen; onNav: (s: Screen, caseId?: string) => void; user: { name: string; email: string; role: string } | null; onSwitchWorkflow: () => void }) {
-  // Computed from whoever actually logged in — "AR" for "Dr. Alicia M.
-  // Reyes" — instead of a hardcoded initials badge.
   const initials = user ? getInitials(user.name) : "?";
   const roleLabel = user ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 
   return (
-    <aside className="w-56 shrink-0 flex flex-col h-full" style={{ background: "linear-gradient(to right, #0F2D56, #0A0E14)" }}>
-      {/* Logo — clickable, returns to the disease-select screen so you
-          can switch between the two separate workflows */}
-      <button onClick={onSwitchWorkflow} className="px-5 py-5 border-b border-white/10 text-left hover:bg-white/5 transition-colors">
+    <aside className="w-56 shrink-0 flex flex-col h-full bg-[#F6F8FA] border-r border-[#D5DBE3]">
+      <button onClick={onSwitchWorkflow} className="px-5 py-4 border-b border-[#D5DBE3] text-left hover:bg-[#EEF2F6] transition-colors">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded bg-[#0EA5E9] flex items-center justify-center">
+          <div className="w-7 h-7 rounded bg-[#0F2D56] text-white flex items-center justify-center">
             <EyeIcon size={14} />
           </div>
-          <span className="text-white font-semibold text-[15px] tracking-tight">UvealCare</span>
+          <span className="text-[#1B2733] font-semibold text-[15px]">UvealCare</span>
         </div>
-        <p className="text-white/40 text-[10px] mt-1 font-mono tracking-wider uppercase">Clinical Platform</p>
+        <p className="text-[#5B6877] text-[11px] mt-1">Clinical Platform</p>
       </button>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -192,10 +175,10 @@ function Sidebar({ active, onNav, user, onSwitchWorkflow }: { active: Screen; on
             <button
               key={item.id}
               onClick={() => onNav(item.id as Screen)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-all text-left ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors text-left border ${
                 isActive
-                  ? "bg-white/15 text-white font-medium"
-                  : "text-white/55 hover:text-white/80 hover:bg-white/8"
+                  ? "bg-white border-[#D5DBE3] text-[#0F2D56] font-semibold"
+                  : "border-transparent text-[#3D4B5C] hover:bg-[#EEF2F6] hover:text-[#1B2733]"
               }`}
             >
               <Icon size={15} />
@@ -205,18 +188,17 @@ function Sidebar({ active, onNav, user, onSwitchWorkflow }: { active: Screen; on
         })}
       </nav>
 
-      {/* User — now the actual signed-in account, not a hardcoded name */}
       <button
         onClick={() => onNav("settings")}
-        className="px-4 py-4 border-t border-white/10 text-left hover:bg-white/5 transition-colors"
+        className="px-4 py-4 border-t border-[#D5DBE3] text-left hover:bg-[#EEF2F6] transition-colors"
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-[#0EA5E9]/30 flex items-center justify-center text-[11px] text-[#7DD3FC] font-semibold">
+          <div className="w-7 h-7 rounded-full bg-[#0F2D56] text-white flex items-center justify-center text-[11px] font-semibold">
             {initials}
           </div>
           <div>
-            <p className="text-white text-xs font-medium">{user?.name ?? "Not signed in"}</p>
-            <p className="text-white/40 text-[10px]">{roleLabel}</p>
+            <p className="text-[#1B2733] text-xs font-medium">{user?.name ?? "Not signed in"}</p>
+            <p className="text-[#5B6877] text-[11px]">{roleLabel}</p>
           </div>
         </div>
       </button>
@@ -226,10 +208,10 @@ function Sidebar({ active, onNav, user, onSwitchWorkflow }: { active: Screen; on
 
 function TopBar({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-8 py-4 bg-[#12161D] border-b border-[#232A34] shrink-0">
+    <div className="flex items-center justify-between px-8 py-4 bg-[#FFFFFF] border-b border-[#D5DBE3] shrink-0">
       <div>
-        <h1 className="text-[#E7ECF2] text-lg font-semibold">{title}</h1>
-        {subtitle && <p className="text-[#8B96A3] text-xs mt-0.5">{subtitle}</p>}
+        <h1 className="text-[#1B2733] text-lg font-semibold">{title}</h1>
+        {subtitle && <p className="text-[#5B6877] text-xs mt-0.5">{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -238,15 +220,15 @@ function TopBar({ title, subtitle, action }: { title: string; subtitle?: string;
 
 function StatusBadge({ status }: { status: "complete" | "missing" | "pending" | "warning" | "active" | "optional" }) {
   const map = {
-    complete: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
-    missing: "bg-red-500/10 text-red-300 border-red-500/30",
-    pending: "bg-amber-500/10 text-amber-300 border-amber-500/30",
-    warning: "bg-orange-500/10 text-orange-300 border-orange-500/30",
-    active: "bg-sky-500/10 text-sky-300 border-sky-500/30",
+    complete: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    missing: "bg-red-50 text-red-700 border-red-200",
+    pending: "bg-amber-50 text-amber-700 border-amber-200",
+    warning: "bg-orange-50 text-orange-700 border-orange-200",
+    active: "bg-sky-50 text-sky-700 border-sky-200",
     // Neutral, non-alarming — for fields that are tracked but were never
     // supposed to count against (or look like they're blocking) readiness,
     // like Date of Surgery on a patient who hasn't been treated yet.
-    optional: "bg-[#161B22] text-[#8291A3] border-[#232A34]",
+    optional: "bg-[#F6F8FA] text-[#5B6877] border-[#D5DBE3]",
   };
   const labels = {
     complete: "Complete",
@@ -257,17 +239,17 @@ function StatusBadge({ status }: { status: "complete" | "missing" | "pending" | 
     optional: "Not Recorded",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium ${map[status]}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-medium ${map[status]}`}>
       {labels[status]}
     </span>
   );
 }
 
 function ReadinessBar({ value }: { value: number }) {
-  const color = value >= 90 ? "#34D399" : value >= 70 ? "#FBBF24" : "#F87171";
+  const color = value >= 90 ? "#1B7F5C" : value >= 70 ? "#A15C00" : "#B3261E";
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-[#161B22] rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-[#F6F8FA] rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${value}%`, backgroundColor: color }} />
       </div>
       <span className="font-mono text-xs font-medium" style={{ color }}>{value}%</span>
@@ -277,49 +259,19 @@ function ReadinessBar({ value }: { value: number }) {
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-[#12161D] rounded border border-[#232A34] ${className}`}>{children}</div>
+    <div className={`bg-[#FFFFFF] rounded border border-[#D5DBE3] ${className}`}>{children}</div>
   );
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-widest mb-3">{children}</h3>
+    <h3 className="text-xs font-semibold text-[#3D4B5C] mb-3">{children}</h3>
   );
 }
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
 
 // 1. LOGIN
-// A colorful rotating glow behind the login screen's eye badge — the
-// one deliberately bold moment in an otherwise restrained, monochrome
-// instrument-panel theme. A rotating conic-gradient blurred heavily
-// reads as a soft swirling multicolor ring, similar to the reference
-// image, without needing actual animated artwork.
-function LoginHeroGlow({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: "7rem", height: "7rem" }}>
-      <style>{`
-        @keyframes uvealcare-orb-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: "7rem",
-          height: "7rem",
-          background: "conic-gradient(from 0deg, #ec4899, #f59e0b, #22d3ee, #6366f1, #ec4899)",
-          filter: "blur(22px)",
-          opacity: 0.65,
-          animation: "uvealcare-orb-spin 7s linear infinite",
-        }}
-      />
-      <div className="relative z-10">{children}</div>
-    </div>
-  );
-}
-
 function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: string; role: string }) => void }) {
   const [email, setEmail] = useState("a.reyes@uvealcare.org");
   const [password, setPassword] = useState("");
@@ -386,146 +338,90 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0E14] flex relative overflow-hidden">
-      {/* Ambient background glare — soft, slow-drifting, low-opacity color
-          washes behind everything. Purely atmospheric: never sits above
-          any readable content, and stays subtle enough not to distract
-          from the actual sign-in task. */}
-      <style>{`
-        @keyframes uvealcare-glare-drift-a {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(40px, 30px) scale(1.15); }
-        }
-        @keyframes uvealcare-glare-drift-b {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-50px, -20px) scale(1.1); }
-        }
-      `}</style>
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: "-10%", left: "-5%", width: "45%", height: "60%",
-          background: "radial-gradient(circle, #6366F1 0%, transparent 70%)",
-          filter: "blur(90px)", opacity: 0.18,
-          animation: "uvealcare-glare-drift-a 18s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          bottom: "-15%", right: "5%", width: "50%", height: "55%",
-          background: "radial-gradient(circle, #EC4899 0%, transparent 70%)",
-          filter: "blur(100px)", opacity: 0.14,
-          animation: "uvealcare-glare-drift-b 22s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: "20%", right: "20%", width: "35%", height: "40%",
-          background: "radial-gradient(circle, #22D3EE 0%, transparent 70%)",
-          filter: "blur(80px)", opacity: 0.12,
-          animation: "uvealcare-glare-drift-a 25s ease-in-out infinite reverse",
-        }}
-      />
-
-      {/* Left panel — a gradient instead of a flat navy block, so the
-          panel visually dissolves into the page background at the seam
-          rather than meeting it as a hard, flat-color edge. */}
-      <div
-        className="hidden lg:flex w-[480px] flex-col justify-between p-12 relative z-10"
-        style={{ background: "linear-gradient(to right, #0F2D56, #0A0E14)" }}
-      >
+    <div className="min-h-screen bg-white flex">
+      {/* Left panel: neutral, no decorative effects */}
+      <div className="hidden lg:flex w-[460px] flex-col justify-between p-12 bg-[#F6F8FA] border-r border-[#D5DBE3]">
         <div>
           <div className="flex items-center gap-3 mb-12">
-            <LoginHeroGlow>
-              <div className="w-16 h-16 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
-                <AnimatedEyeIcon size={32} />
-              </div>
-            </LoginHeroGlow>
+            <div className="w-10 h-10 rounded bg-[#0F2D56] text-white flex items-center justify-center">
+              <EyeIcon size={20} />
+            </div>
             <div>
-              <p className="text-white font-semibold text-lg tracking-tight">UvealCare</p>
-              <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider">Clinical Workflow Platform</p>
+              <p className="text-[#1B2733] font-semibold text-lg">UvealCare</p>
+              <p className="text-[#5B6877] text-xs">Clinical Workflow Platform</p>
             </div>
           </div>
-          <div className="space-y-6">
-            <h2 className="text-white text-3xl font-semibold leading-tight">
-              Coordinated care<br />for uveal melanoma.
+          <div className="space-y-4">
+            <h2 className="text-[#1B2733] text-2xl font-semibold leading-snug">
+              Tumor board preparation<br />and case readiness
             </h2>
-            <p className="text-white/50 text-sm leading-relaxed">
-              Reduce preparation time, prevent missing information, and standardize multidisciplinary workflow for every patient.
+            <p className="text-[#3D4B5C] text-sm leading-relaxed">
+              Identify missing information before review, standardize multidisciplinary preparation, and track decisions and follow-up for every patient.
             </p>
           </div>
         </div>
 
         <div className="space-y-4">
           {[
-            { label: "Case Readiness", desc: "Know what's missing before tumor board" },
-            { label: "Multidisciplinary Review", desc: "Auto-generate structured case summaries" },
-            { label: "Decision Tracking", desc: "Record and assign next steps instantly" },
+            { label: "Case readiness", desc: "Identify outstanding items before tumor board review" },
+            { label: "Multidisciplinary review", desc: "Structured case summaries built from recorded data" },
+            { label: "Decision tracking", desc: "Record recommendations and assign follow-up tasks" },
           ].map((f) => (
             <div key={f.label} className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded bg-[#0EA5E9]/20 flex items-center justify-center mt-0.5 shrink-0">
+              <div className="w-5 h-5 rounded border border-[#C4CCD6] bg-white text-[#0F2D56] flex items-center justify-center mt-0.5 shrink-0">
                 <CheckIcon size={12} />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">{f.label}</p>
-                <p className="text-white/40 text-xs">{f.desc}</p>
+                <p className="text-[#1B2733] text-sm font-medium">{f.label}</p>
+                <p className="text-[#5B6877] text-xs">{f.desc}</p>
               </div>
             </div>
           ))}
         </div>
-
-        {/* Note: the compliance claims below are placeholder marketing copy
-            from the original design, not verified certifications — remove
-            or replace before showing this outside your own testing. */}
-        <p className="text-white/20 text-xs">
-          UvealCare v2.4.1 · © 2024 UvealCare Health Systems
-        </p>
       </div>
 
       {/* Right panel */}
       <div className="flex-1 flex items-center justify-center p-8 relative z-10">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
+            <div className="w-8 h-8 rounded bg-[#0F2D56] text-white flex items-center justify-center">
               <EyeIcon size={14} />
             </div>
-            <span className="text-[#E7ECF2] font-semibold text-lg">UvealCare</span>
+            <span className="text-[#1B2733] font-semibold text-lg">UvealCare</span>
           </div>
 
-          <h2 className="text-[#E7ECF2] text-2xl font-semibold mb-1">{isSignUp ? "Create account" : "Sign in"}</h2>
-          <p className="text-[#8B96A3] text-sm mb-8">{isSignUp ? "Set up your clinical workspace" : "Access your clinical workspace"}</p>
+          <h2 className="text-[#1B2733] text-2xl font-semibold mb-1">{isSignUp ? "Create account" : "Sign in"}</h2>
+          <p className="text-[#5B6877] text-sm mb-8">{isSignUp ? "Set up your clinical workspace" : "Access your clinical workspace"}</p>
 
           <div className="space-y-4">
             {isSignUp && (
               <div>
-                <label className="block text-xs font-medium text-[#C3CCD6] mb-1.5">Full name</label>
+                <label className="block text-xs font-medium text-[#3D4B5C] mb-1.5">Full name</label>
                 <input
                   value={signupName}
                   onChange={(e) => setSignupName(e.target.value)}
-                  className="w-full border border-[#2E3742] rounded px-3 py-2.5 text-sm text-[#E7ECF2] bg-[#12161D] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
+                  className="w-full border border-[#C4CCD6] rounded px-3 py-2.5 text-sm text-[#1B2733] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] focus:ring-2 focus:ring-[#0B63B6]/20 transition-all"
                   placeholder="Dr. Jane Smith"
                 />
               </div>
             )}
             <div>
-              <label className="block text-xs font-medium text-[#C3CCD6] mb-1.5">Email address</label>
+              <label className="block text-xs font-medium text-[#3D4B5C] mb-1.5">Email address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-[#2E3742] rounded px-3 py-2.5 text-sm text-[#E7ECF2] bg-[#12161D] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
+                className="w-full border border-[#C4CCD6] rounded px-3 py-2.5 text-sm text-[#1B2733] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] focus:ring-2 focus:ring-[#0B63B6]/20 transition-all"
                 placeholder="clinician@hospital.org"
               />
             </div>
             {isSignUp && (
               <div>
-                <label className="block text-xs font-medium text-[#C3CCD6] mb-1.5">Role</label>
+                <label className="block text-xs font-medium text-[#3D4B5C] mb-1.5">Role</label>
                 <select
                   value={signupRole}
                   onChange={(e) => setSignupRole(e.target.value)}
-                  className="w-full border border-[#2E3742] rounded px-3 py-2.5 text-sm text-[#E7ECF2] bg-[#12161D] focus:outline-none focus:border-[#0EA5E9] transition-all"
+                  className="w-full border border-[#C4CCD6] rounded px-3 py-2.5 text-sm text-[#1B2733] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] transition-all"
                 >
                   <option value="ophthalmologist">Ophthalmologist</option>
                   <option value="radiation_oncologist">Radiation Oncologist</option>
@@ -537,50 +433,47 @@ function LoginScreen({ onLogin }: { onLogin: (user: { name: string; email: strin
             )}
             <div>
               <div className="flex justify-between mb-1.5">
-                <label className="block text-xs font-medium text-[#C3CCD6]">Password</label>
-                {!isSignUp && <a href="#" className="text-xs text-[#0EA5E9] hover:underline">Forgot password?</a>}
+                <label className="block text-xs font-medium text-[#3D4B5C]">Password</label>
+                {!isSignUp && <a href="#" className="text-xs text-[#0B63B6] hover:underline">Forgot password?</a>}
               </div>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (isSignUp ? handleSignUp() : handleSignIn())}
-                className="w-full border border-[#2E3742] rounded px-3 py-2.5 text-sm text-[#E7ECF2] bg-[#12161D] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
+                className="w-full border border-[#C4CCD6] rounded px-3 py-2.5 text-sm text-[#1B2733] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] focus:ring-2 focus:ring-[#0B63B6]/20 transition-all"
               />
-              {isSignUp && <p className="text-[10px] text-[#8291A3] mt-1">At least 8 characters.</p>}
+              {isSignUp && <p className="text-[11px] text-[#5B6877] mt-1">At least 8 characters.</p>}
             </div>
 
             {error && (
-              <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">{error}</p>
+              <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>
             )}
 
             <button
               onClick={isSignUp ? handleSignUp : handleSignIn}
               disabled={isSubmitting}
-              className="w-full bg-[#0F2D56] text-white rounded py-2.5 text-sm font-semibold hover:bg-[#0F2D56]/90 transition-colors mt-2 disabled:opacity-60"
+              className="w-full bg-[#0F2D56] text-white rounded py-2.5 text-sm font-semibold hover:bg-[#0B2342] transition-colors mt-2 disabled:opacity-60"
             >
               {isSubmitting ? (isSignUp ? "Creating account…" : "Signing in…") : (isSignUp ? "Create Account" : "Sign In")}
             </button>
 
             <button
               onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
-              className="w-full text-xs text-[#8B96A3] hover:text-[#0F2D56] transition-colors"
+              className="w-full text-xs text-[#5B6877] hover:text-[#0F2D56] transition-colors"
             >
               {isSignUp ? "Already have an account? Sign in" : "Need an account? Create one"}
             </button>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-[#232A34]">
-            <p className="text-[10px] text-[#8291A3] text-center leading-relaxed">
+          <div className="mt-6 pt-6 border-t border-[#D5DBE3]">
+            <p className="text-[11px] text-[#5B6877] text-center leading-relaxed">
               This system is for authorized healthcare personnel only.<br />
               Unauthorized access is prohibited and may be prosecuted.
             </p>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-4 text-[10px] text-[#8291A3]">
-            <span>HL7 FHIR</span>
           </div>
-        </div>
       </div>
     </div>
   );
@@ -634,37 +527,37 @@ function DiseaseSelectScreen({ onSelect }: { onSelect: (diseaseKey: string) => v
   // active in this space, so "underserved" is accurate; "no one else is
   // doing this" would not be.
   const blurbs: Record<string, string> = {
-    uveal_melanoma: "A rare ocular cancer (~1,500–2,000 US cases/year) with no dedicated clinical workflow tool on the market today.",
-    soft_tissue_sarcoma: "A rare cancer (~13,000 US cases/year), officially recognized by the NCI as an underserved area of oncology.",
+    uveal_melanoma: "Rare primary intraocular malignancy. Tracks imaging, tumor measurements, molecular results, and multidisciplinary review.",
+    soft_tissue_sarcoma: "Rare group of connective tissue malignancies. Tracks imaging, staging, and multidisciplinary review.",
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0E14] flex items-center justify-center p-8">
+    <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center p-8">
       <div className="w-full max-w-3xl">
         <div className="text-center mb-10">
-          <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider mb-2">UvealCare Clinical Platform</p>
-          <h1 className="text-[#E7ECF2] text-2xl font-semibold">Choose a workflow</h1>
-          <p className="text-[#8291A3] text-sm mt-2">Each disease has its own dedicated set of cases, fields, and tumor board workflow.</p>
+          <p className="text-white/40 text-[11px] font-mono mb-2">UvealCare Clinical Platform</p>
+          <h1 className="text-[#1B2733] text-2xl font-semibold">Select a clinical workflow</h1>
+          <p className="text-[#5B6877] text-sm mt-2">Each disease has its own dedicated set of cases, fields, and tumor board workflow.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {profiles.length === 0 && (
-            <p className="text-[#8291A3] text-sm col-span-2 text-center">Loading available diseases…</p>
+            <p className="text-[#5B6877] text-sm col-span-2 text-center">Loading available diseases…</p>
           )}
           {profiles.map((p) => (
             <button
               key={p.key}
               onClick={() => onSelect(p.key)}
-              className="text-left bg-[#12161D] border border-[#232A34] rounded-lg p-6 hover:border-[#0EA5E9] hover:bg-[#161B22] transition-all group"
+              className="text-left bg-[#FFFFFF] border border-[#D5DBE3] rounded-lg p-6 hover:border-[#0B63B6] hover:bg-[#EEF2F6] transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-[#0EA5E9]/15 flex items-center justify-center mb-4 group-hover:bg-[#0EA5E9]/25 transition-colors">
+              <div className="w-10 h-10 rounded bg-[#E8F0F9] text-[#0B63B6] flex items-center justify-center mb-4 transition-colors">
                 <EyeIcon size={18} />
               </div>
-              <h2 className="text-[#E7ECF2] text-lg font-semibold mb-1.5">{p.display_name}</h2>
-              <p className="text-[#8291A3] text-xs leading-relaxed mb-3">
+              <h2 className="text-[#1B2733] text-lg font-semibold mb-1.5">{p.display_name}</h2>
+              <p className="text-[#5B6877] text-xs leading-relaxed mb-3">
                 {blurbs[p.key] ?? `${p.field_count} tracked clinical fields.`}
               </p>
-              <p className="text-[#0EA5E9] text-xs font-medium">Open workflow →</p>
+              <p className="text-[#0B63B6] text-xs font-medium">Open workflow</p>
             </button>
           ))}
         </div>
@@ -703,6 +596,7 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
       follow_up_date: string | null;
       surveillance_protocol: string | null;
       tfsom_risk_label: "Low" | "Moderate" | "High" | null;
+      gep_risk_label: "Low" | "Intermediate" | "High" | null;
     }[]
   >([]);
 
@@ -850,10 +744,10 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
     : "0";
 
   const stats = [
-    { label: "Active Patients", value: String(patients.length), delta: "Live from backend", deltaColor: "#34D399" },
-    { label: "Cases Requiring Attention", value: String(incompleteCount), delta: `${incompleteCount} incomplete`, deltaColor: "#F87171" },
-    { label: "Ready for MDT Review", value: String(readyCount), delta: "100% complete", deltaColor: "#0EA5E9" },
-    { label: "Incomplete Cases", value: String(incompleteCount), delta: `Avg ${avgMissingItems} items missing`, deltaColor: "#FBBF24" },
+    { label: "Active Patients", value: String(patients.length), delta: "In this workflow", deltaColor: "#1B7F5C" },
+    { label: "Cases Requiring Attention", value: String(incompleteCount), delta: `${incompleteCount} incomplete`, deltaColor: "#B3261E" },
+    { label: "Ready for MDT Review", value: String(readyCount), delta: "100% complete", deltaColor: "#0B63B6" },
+    { label: "Incomplete Cases", value: String(incompleteCount), delta: `Avg ${avgMissingItems} items missing`, deltaColor: "#A15C00" },
   ];
 
   // Real tasks across all patients — no more hardcoded fake names/tasks.
@@ -877,7 +771,7 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
         action={
           <button
             onClick={() => setShowNewPatientForm(true)}
-            className="flex items-center gap-2 bg-[#0F2D56] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#0F2D56]/90 transition-colors"
+            className="flex items-center gap-2 bg-[#0F2D56] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#0B2342] transition-colors"
           >
             + New Patient
           </button>
@@ -890,48 +784,48 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
           in the detail screens is hardcoded to a specific patient. */}
       {showNewPatientForm && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={() => setShowNewPatientForm(false)}>
-          <div className="bg-[#12161D] rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold text-[#E7ECF2] mb-4">New Patient</h2>
+          <div className="bg-[#FFFFFF] rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-[#1B2733] mb-4">New Patient</h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-[#C3CCD6] mb-1">Disease Profile</label>
-                <div className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm bg-[#161B22] text-[#8291A3]">
+                <label className="block text-xs font-medium text-[#3D4B5C] mb-1">Disease Profile</label>
+                <div className="w-full border border-[#C4CCD6] rounded px-3 py-2 text-sm bg-[#F6F8FA] text-[#5B6877]">
                   {currentProfile ? `${currentProfile.display_name} (${currentProfile.field_count} fields)` : "Loading…"}
                 </div>
-                <p className="text-[10px] text-[#8291A3] mt-1">Matches whichever workflow tab you're currently in.</p>
+                <p className="text-[11px] text-[#5B6877] mt-1">Matches whichever workflow tab you're currently in.</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#C3CCD6] mb-1">MRN *</label>
+                <label className="block text-xs font-medium text-[#3D4B5C] mb-1">MRN *</label>
                 <input
                   value={newPatient.mrn}
                   onChange={(e) => setNewPatient({ ...newPatient, mrn: e.target.value })}
-                  className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0EA5E9]"
+                  className="w-full border border-[#C4CCD6] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0B63B6]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#C3CCD6] mb-1">Full Name *</label>
+                <label className="block text-xs font-medium text-[#3D4B5C] mb-1">Full Name *</label>
                 <input
                   value={newPatient.name}
                   onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                  className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0EA5E9]"
+                  className="w-full border border-[#C4CCD6] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0B63B6]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#C3CCD6] mb-1">Date of Birth *</label>
+                  <label className="block text-xs font-medium text-[#3D4B5C] mb-1">Date of Birth *</label>
                   <input
                     type="date"
                     value={newPatient.dob}
                     onChange={(e) => setNewPatient({ ...newPatient, dob: e.target.value })}
-                    className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0EA5E9]"
+                    className="w-full border border-[#C4CCD6] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0B63B6]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#C3CCD6] mb-1">Laterality</label>
+                  <label className="block text-xs font-medium text-[#3D4B5C] mb-1">Laterality</label>
                   <select
                     value={newPatient.laterality}
                     onChange={(e) => setNewPatient({ ...newPatient, laterality: e.target.value })}
-                    className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0EA5E9]"
+                    className="w-full border border-[#C4CCD6] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0B63B6]"
                   >
                     <option>OD</option>
                     <option>OS</option>
@@ -941,31 +835,31 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#C3CCD6] mb-1">Diagnosis</label>
+                <label className="block text-xs font-medium text-[#3D4B5C] mb-1">Diagnosis</label>
                 <input
                   value={newPatient.diagnosis}
                   onChange={(e) => setNewPatient({ ...newPatient, diagnosis: e.target.value })}
                   placeholder="e.g. Choroidal Melanoma OD"
-                  className="w-full border border-[#2E3742] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0EA5E9]"
+                  className="w-full border border-[#C4CCD6] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#0B63B6]"
                 />
               </div>
             </div>
 
             {createError && (
-              <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2 mt-3">{createError}</p>
+              <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 mt-3">{createError}</p>
             )}
 
             <div className="flex gap-2 mt-5">
               <button
                 onClick={() => setShowNewPatientForm(false)}
-                className="flex-1 border border-[#2E3742] text-[#C3CCD6] rounded py-2 text-sm font-medium hover:bg-[#0A0E14] transition-colors"
+                className="flex-1 border border-[#C4CCD6] text-[#3D4B5C] rounded py-2 text-sm font-medium hover:bg-[#F6F8FA] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreatePatient}
                 disabled={isCreatingPatient}
-                className="flex-1 bg-[#0F2D56] text-white rounded py-2 text-sm font-semibold hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-60"
+                className="flex-1 bg-[#0F2D56] text-white rounded py-2 text-sm font-semibold hover:bg-[#0B2342] transition-colors disabled:opacity-60"
               >
                 {isCreatingPatient ? "Creating…" : "Create Patient"}
               </button>
@@ -974,38 +868,38 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <Card key={s.label} className="p-4">
-              <p className="text-[#8B96A3] text-xs mb-2">{s.label}</p>
-              <p className="text-[#E7ECF2] text-2xl font-semibold font-mono">{s.value}</p>
+              <p className="text-[#5B6877] text-xs mb-2">{s.label}</p>
+              <p className="text-[#1B2733] text-2xl font-semibold font-mono">{s.value}</p>
               <p className="text-xs mt-1" style={{ color: s.deltaColor }}>{s.delta}</p>
             </Card>
           ))}
         </div>
 
-        <div className="grid grid-cols-[1fr_320px] gap-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_320px] gap-6">
           {/* Patient list — a real population view of this disease, not
               just a table of names. Sortable by follow-up urgency by
               default, since that's the specific thing a clinician can't
               get from a generic per-patient EHR view without a custom
               report built per site. */}
           <Card>
-            <div className="px-5 py-4 border-b border-[#161B22] flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-[#E4E8ED] flex items-center justify-between">
               <div>
                 <SectionHeader>Active Patients</SectionHeader>
-                <p className="text-[10px] text-[#7C8794] -mt-2">
-                  Every {currentProfile?.display_name ?? "disease"} patient, one place — sorted so who needs attention shows up first.
+                <p className="text-[11px] text-[#6B7785] -mt-2">
+                  All {currentProfile?.display_name ?? "disease"} patients in this workflow. Sort by follow-up urgency, readiness, or name.
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
-                <label className="text-[10px] text-[#8291A3]">Sort:</label>
+                <label className="text-[11px] text-[#5B6877]">Sort:</label>
                 <select
                   value={sortMode}
                   onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                  className="bg-[#161B22] border border-[#232A34] text-[#C3CCD6] text-[11px] rounded px-2 py-1 focus:outline-none focus:border-[#0EA5E9]"
+                  className="bg-[#F6F8FA] border border-[#D5DBE3] text-[#3D4B5C] text-xs rounded px-2 py-1 focus:outline-none focus:border-[#0B63B6]"
                 >
                   <option value="urgency">Follow-up urgency</option>
                   <option value="readiness">Least ready first</option>
@@ -1013,11 +907,12 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                 </select>
               </div>
             </div>
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#161B22]">
+                <tr className="border-b border-[#E4E8ED]">
                   {["Patient", "MRN", "Lat.", "Stage", "Imaging", "Measurement", "Follow-up", "Readiness", ""].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">
+                    <th key={h} className="px-4 py-2.5 text-left whitespace-nowrap text-[11px] font-semibold text-[#5B6877]">
                       {h}
                     </th>
                   ))}
@@ -1029,45 +924,53 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                   const isOverdue = followDays !== null && followDays < 0;
                   const isSoon = followDays !== null && followDays >= 0 && followDays <= 7;
                   const trendLabel =
-                    p.measurement_trend === "growing" ? "▲ Growing"
-                    : p.measurement_trend === "shrinking" ? "▼ Shrinking"
-                    : p.measurement_trend === "stable" ? "● Stable"
+                    p.measurement_trend === "growing" ? "Growing"
+                    : p.measurement_trend === "shrinking" ? "Shrinking"
+                    : p.measurement_trend === "stable" ? "Stable"
                     : null;
                   const trendColor =
-                    p.measurement_trend === "growing" ? "text-amber-400"
-                    : p.measurement_trend === "shrinking" ? "text-emerald-400"
-                    : "text-[#8291A3]";
+                    p.measurement_trend === "growing" ? "text-amber-700"
+                    : p.measurement_trend === "shrinking" ? "text-emerald-700"
+                    : "text-[#5B6877]";
                   return (
                     <tr
                       key={p.case_id}
-                      className="border-b border-[#0A0E14] hover:bg-[#0A0E14] cursor-pointer transition-colors"
+                      className="border-b border-[#E4E8ED] hover:bg-[#F6F8FA] cursor-pointer transition-colors"
                       onClick={() => onNav("patient", p.case_id)}
                     >
-                      <td className="px-4 py-3">
-                        <p className="text-[#E7ECF2] text-sm font-medium">{p.patient_name}</p>
-                        <p className="text-[#7C8794] text-[10px]">{p.diagnosis}</p>
+                      <td className="px-4 py-3 min-w-[10rem]">
+                        <p className="text-[#1B2733] text-sm font-medium">{p.patient_name}</p>
+                        <p className="text-[#6B7785] text-[11px]">{p.diagnosis}</p>
                         {/* Flags which nevi are trending toward melanoma
                             across the WHOLE population at a glance — the
                             kind of disease-specific signal a generic EHR
                             patient list has no way to surface. */}
                         {(p.tfsom_risk_label === "Moderate" || p.tfsom_risk_label === "High") && (
-                          <p className={`text-[10px] font-medium mt-0.5 ${p.tfsom_risk_label === "High" ? "text-red-400" : "text-amber-400"}`}>
-                            ⚠ {p.tfsom_risk_label} growth risk (TFSOM)
+                          <p className={`text-[11px] font-medium mt-0.5 ${p.tfsom_risk_label === "High" ? "text-red-700" : "text-amber-700"}`}>
+                            {p.tfsom_risk_label} growth risk (TFSOM)
+                          </p>
+                        )}
+                        {/* A different axis from TFSOM above: this is an
+                            already-diagnosed melanoma's metastatic risk,
+                            not a nevus's risk of becoming one. */}
+                        {(p.gep_risk_label === "Intermediate" || p.gep_risk_label === "High") && (
+                          <p className={`text-[11px] font-medium mt-0.5 ${p.gep_risk_label === "High" ? "text-red-700" : "text-amber-700"}`}>
+                            {p.gep_risk_label} metastatic risk (GEP)
                           </p>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-[11px] text-[#8B96A3]">{p.mrn}</span>
+                        <span className="font-mono text-xs text-[#5B6877]">{p.mrn}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-[#C3CCD6] text-xs">{p.laterality ?? "—"}</span>
+                        <span className="text-[#3D4B5C] text-xs">{p.laterality ?? "—"}</span>
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={p.status as any} />
                       </td>
                       <td className="px-4 py-3 w-24">
                         {p.imaging_pct === null ? (
-                          <span className="text-[#7C8794] text-xs">—</span>
+                          <span className="text-[#6B7785] text-xs">—</span>
                         ) : (
                           <ReadinessBar value={p.imaging_pct} />
                         )}
@@ -1075,23 +978,23 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                       <td className="px-4 py-3 max-w-[180px]">
                         {p.key_measurement ? (
                           <>
-                            <p className="text-[#C3CCD6] text-xs truncate" title={p.key_measurement}>{p.key_measurement}</p>
-                            {trendLabel && <p className={`text-[10px] ${trendColor}`}>{trendLabel}</p>}
+                            <p className="text-[#3D4B5C] text-xs truncate" title={p.key_measurement}>{p.key_measurement}</p>
+                            {trendLabel && <p className={`text-[11px] ${trendColor}`}>{trendLabel}</p>}
                           </>
                         ) : (
-                          <span className="text-[#7C8794] text-xs italic">Not recorded</span>
+                          <span className="text-[#6B7785] text-xs italic">Not recorded</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         {p.follow_up_date ? (
                           <>
-                            <p className={`text-xs font-medium ${isOverdue ? "text-red-400" : isSoon ? "text-amber-400" : "text-[#C3CCD6]"}`}>
+                            <p className={`text-xs font-medium ${isOverdue ? "text-red-700" : isSoon ? "text-amber-700" : "text-[#3D4B5C]"}`}>
                               {isOverdue ? `Overdue ${Math.abs(followDays!)}d` : followDays === 0 ? "Today" : `In ${followDays}d`}
                             </p>
-                            <p className="text-[#7C8794] text-[10px]">{p.follow_up_date}</p>
+                            <p className="text-[#6B7785] text-[11px]">{p.follow_up_date}</p>
                           </>
                         ) : (
-                          <span className="text-[#7C8794] text-xs">—</span>
+                          <span className="text-[#6B7785] text-xs">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 w-32">
@@ -1105,25 +1008,26 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                 })}
               </tbody>
             </table>
+            </div>
           </Card>
 
           {/* Tasks sidebar */}
           <div className="space-y-4">
             <Card>
-              <div className="px-4 py-4 border-b border-[#161B22]">
+              <div className="px-4 py-4 border-b border-[#E4E8ED]">
                 <SectionHeader>Upcoming Tasks</SectionHeader>
               </div>
-              <div className="divide-y divide-[#0A0E14]">
+              <div className="divide-y divide-[#E4E8ED]">
                 {tasks.length === 0 && (
-                  <p className="px-4 py-3 text-xs text-[#8291A3] italic">No open tasks assigned yet.</p>
+                  <p className="px-4 py-3 text-xs text-[#5B6877] italic">No open tasks assigned yet.</p>
                 )}
                 {tasks.map((t) => (
                   <div key={t.id} className="px-4 py-3 flex items-start gap-3">
                     <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-amber-400" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#E7ECF2] text-xs font-medium truncate">{t.description}</p>
-                      <p className="text-[#8291A3] text-[10px]">
-                        {t.patient_name}{t.assignee_name ? ` → ${t.assignee_name}` : ""}{t.due_date ? ` · Due ${t.due_date}` : ""}
+                      <p className="text-[#1B2733] text-xs font-medium truncate">{t.description}</p>
+                      <p className="text-[#5B6877] text-[11px]">
+                        {t.patient_name}{t.assignee_name ? ` · Assigned to ${t.assignee_name}` : ""}{t.due_date ? ` · Due ${t.due_date}` : ""}
                       </p>
                     </div>
                   </div>
@@ -1137,7 +1041,7 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                 {!isEditingMeeting && (
                   <button
                     onClick={() => { setIsEditingMeeting(true); setMeetingDateInput(nextMeetingDate ?? ""); }}
-                    className="text-[10px] text-[#0EA5E9] hover:underline -mt-3"
+                    className="text-[11px] text-[#0B63B6] hover:underline -mt-3"
                   >
                     {nextMeetingDate ? "Change" : "Set date"}
                   </button>
@@ -1150,19 +1054,19 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                     type="date"
                     value={meetingDateInput}
                     onChange={(e) => setMeetingDateInput(e.target.value)}
-                    className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-xs bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-[#0EA5E9]"
+                    className="w-full border border-[#C4CCD6] rounded px-2 py-1.5 text-xs bg-[#FFFFFF] text-[#3D4B5C] focus:outline-none focus:border-[#0B63B6]"
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={() => setIsEditingMeeting(false)}
-                      className="flex-1 border border-[#2E3742] text-[#C3CCD6] rounded py-1.5 text-xs hover:bg-[#161B22] transition-colors"
+                      className="flex-1 border border-[#C4CCD6] text-[#3D4B5C] rounded py-1.5 text-xs hover:bg-[#EEF2F6] transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveMeetingDate}
                       disabled={isSavingMeeting || !meetingDateInput}
-                      className="flex-1 bg-[#0F2D56] text-white rounded py-1.5 text-xs font-semibold hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-60"
+                      className="flex-1 bg-[#0F2D56] text-white rounded py-1.5 text-xs font-semibold hover:bg-[#0B2342] transition-colors disabled:opacity-60"
                     >
                       {isSavingMeeting ? "Saving…" : "Save"}
                     </button>
@@ -1172,39 +1076,39 @@ function DashboardScreen({ onNav, diseaseProfileKey }: { onNav: (s: Screen, case
                 <div className="space-y-2">
                   {nextMeetingDate ? (
                     <>
-                      <p className="text-[#E7ECF2] text-sm font-semibold">
+                      <p className="text-[#1B2733] text-sm font-semibold">
                         {new Date(nextMeetingDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                       </p>
-                      <p className="text-[#8B96A3] text-xs">
+                      <p className="text-[#5B6877] text-xs">
                         {daysUntilMeeting !== null && daysUntilMeeting >= 0
                           ? daysUntilMeeting === 0 ? "Today" : `In ${daysUntilMeeting} day${daysUntilMeeting === 1 ? "" : "s"}`
                           : "This date has passed"}
                       </p>
 
                       {showUrgentAlert && (
-                        <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded">
-                          <p className="text-[11px] text-red-300 font-medium">
+                        <div className="p-2.5 bg-red-50 border border-red-200 rounded">
+                          <p className="text-xs text-red-700 font-medium">
                             {incompletePatients.length} case{incompletePatients.length === 1 ? "" : "s"} still incomplete — meeting in {daysUntilMeeting} day{daysUntilMeeting === 1 ? "" : "s"}
                           </p>
                         </div>
                       )}
 
-                      <div className="pt-2 border-t border-[#161B22]">
-                        <p className="text-[10px] text-[#8291A3] mb-1.5">
+                      <div className="pt-2 border-t border-[#E4E8ED]">
+                        <p className="text-[11px] text-[#5B6877] mb-1.5">
                           {incompletePatients.length > 0 ? "Not Yet Ready" : "All Cases Ready"}
                         </p>
                         {incompletePatients.length === 0 && patients.length > 0 && (
-                          <p className="text-[#8291A3] text-xs italic">Every case is 100% complete.</p>
+                          <p className="text-[#5B6877] text-xs italic">Every case is 100% complete.</p>
                         )}
                         {incompletePatients.slice(0, 4).map((p) => (
-                          <p key={p.case_id} className="text-[#E7ECF2] text-xs font-medium">
+                          <p key={p.case_id} className="text-[#1B2733] text-xs font-medium">
                             {p.patient_name} — {p.readiness_pct}%
                           </p>
                         ))}
                       </div>
                     </>
                   ) : (
-                    <p className="text-[#8291A3] text-xs italic">No tumor board date set yet.</p>
+                    <p className="text-[#5B6877] text-xs italic">No tumor board date set yet.</p>
                   )}
                   <button
                     onClick={() => onNav("tumor-board")}
@@ -1318,21 +1222,21 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNav("case-readiness")}
-              className="flex items-center gap-2 border border-[#232A34] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#0A0E14] transition-colors"
+              className="flex items-center gap-2 border border-[#D5DBE3] text-[#3D4B5C] px-3 py-2 rounded text-sm hover:bg-[#F6F8FA] transition-colors"
             >
               <ClipboardIcon size={14} />
               Case Readiness
             </button>
             <button
               onClick={() => onNav("case-packet")}
-              className="flex items-center gap-2 border border-[#232A34] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#0A0E14] transition-colors"
+              className="flex items-center gap-2 border border-[#D5DBE3] text-[#3D4B5C] px-3 py-2 rounded text-sm hover:bg-[#F6F8FA] transition-colors"
             >
               <ScanIcon size={14} />
               Case Packet
             </button>
             <button
               onClick={() => onNav("tumor-board")}
-              className="flex items-center gap-2 bg-[#0F2D56] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#0F2D56]/90 transition-colors"
+              className="flex items-center gap-2 bg-[#0F2D56] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#0B2342] transition-colors"
             >
               <GroupIcon size={14} />
               Prepare for MDT
@@ -1342,7 +1246,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
       />
 
       {/* Journey bar — driven by this case's real disease profile stages */}
-      <div className="bg-[#12161D] border-b border-[#232A34] px-8 py-4">
+      <div className="bg-[#FFFFFF] border-b border-[#D5DBE3] px-8 py-4">
         <div className="flex items-center gap-0">
           {journeyStages.map((stage, i) => {
             const isDone = i < currentStageIndex;
@@ -1351,18 +1255,18 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
               <div key={stage} className="flex items-center">
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-all ${
                   isActive ? "bg-[#0F2D56] text-white" :
-                  isDone ? "text-emerald-400" : "text-[#7C8794]"
+                  isDone ? "text-emerald-700" : "text-[#6B7785]"
                 }`}>
                   {isDone && (
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M2 5l2.5 2.5L8 3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
-                  {isActive && <span className="w-2 h-2 rounded-full bg-[#0EA5E9] inline-block" />}
+                  {isActive && <span className="w-2 h-2 rounded-full bg-[#0B63B6] inline-block" />}
                   {stage}
                 </div>
                 {i < journeyStages.length - 1 && (
-                  <div className={`w-6 h-px ${isDone ? "bg-emerald-300" : "bg-[#232A34]"}`} />
+                  <div className={`w-6 h-px ${isDone ? "bg-emerald-300" : "bg-[#E4E8ED]"}`} />
                 )}
               </div>
             );
@@ -1371,7 +1275,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
       </div>
 
       {/* Tabs */}
-      <div className="bg-[#12161D] border-b border-[#232A34] px-8 flex gap-1">
+      <div className="bg-[#FFFFFF] border-b border-[#D5DBE3] px-8 flex gap-1">
         {tabs.map((tab) => (
           <button
             key={tab}
@@ -1379,7 +1283,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
             className={`px-4 py-3 text-sm capitalize transition-all border-b-2 -mb-px ${
               activeTab === tab
                 ? "border-[#0F2D56] text-[#0F2D56] font-medium"
-                : "border-transparent text-[#8B96A3] hover:text-[#C3CCD6]"
+                : "border-transparent text-[#5B6877] hover:text-[#1B2733]"
             }`}
           >
             {tab}
@@ -1387,7 +1291,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         {activeTab === "overview" && (
           <div className="grid grid-cols-[1fr_1fr_300px] gap-5">
             {/* Patient Info */}
@@ -1397,7 +1301,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                 {!isEditingInfo && (
                   <button
                     onClick={() => setIsEditingInfo(true)}
-                    className="text-xs text-[#0EA5E9] hover:underline -mt-3"
+                    className="text-xs text-[#0B63B6] hover:underline -mt-3"
                   >
                     Edit
                   </button>
@@ -1417,19 +1321,19 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     { label: "Referring Provider", value: caseInfo?.referring_provider ?? "Not recorded" },
                   ].map((r) => (
                     <div key={r.label} className="flex justify-between items-start gap-4">
-                      <span className="text-[#8291A3] text-xs shrink-0">{r.label}</span>
-                      <span className={`text-xs text-right ${r.mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#7C8794] italic" : "text-[#E7ECF2]"}`}>{r.value}</span>
+                      <span className="text-[#5B6877] text-xs shrink-0">{r.label}</span>
+                      <span className={`text-xs text-right ${r.mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#6B7785] italic" : "text-[#1B2733]"}`}>{r.value}</span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[10px] text-[#8291A3] mb-1">Sex</label>
+                    <label className="block text-[11px] text-[#5B6877] mb-1">Sex</label>
                     <select
                       value={editForm.sex}
                       onChange={(e) => setEditForm({ ...editForm, sex: e.target.value })}
-                      className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0EA5E9]"
+                      className="w-full border border-[#C4CCD6] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B63B6]"
                     >
                       <option value="">Not recorded</option>
                       <option value="Female">Female</option>
@@ -1444,31 +1348,31 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     { key: "referring_provider", label: "Referring Provider", placeholder: "Dr. J. Thornton" },
                   ].map((f) => (
                     <div key={f.key}>
-                      <label className="block text-[10px] text-[#8291A3] mb-1">{f.label}</label>
+                      <label className="block text-[11px] text-[#5B6877] mb-1">{f.label}</label>
                       <input
                         value={(editForm as any)[f.key]}
                         onChange={(e) => setEditForm({ ...editForm, [f.key]: e.target.value })}
                         placeholder={f.placeholder}
-                        className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0EA5E9]"
+                        className="w-full border border-[#C4CCD6] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B63B6]"
                       />
                     </div>
                   ))}
 
                   {saveInfoError && (
-                    <p className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/30 rounded px-2 py-1.5">{saveInfoError}</p>
+                    <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1.5">{saveInfoError}</p>
                   )}
 
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => { setIsEditingInfo(false); setSaveInfoError(null); }}
-                      className="flex-1 border border-[#2E3742] text-[#C3CCD6] rounded py-1.5 text-xs font-medium hover:bg-[#0A0E14] transition-colors"
+                      className="flex-1 border border-[#C4CCD6] text-[#3D4B5C] rounded py-1.5 text-xs font-medium hover:bg-[#F6F8FA] transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveInfo}
                       disabled={isSavingInfo}
-                      className="flex-1 bg-[#0F2D56] text-white rounded py-1.5 text-xs font-semibold hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-60"
+                      className="flex-1 bg-[#0F2D56] text-white rounded py-1.5 text-xs font-semibold hover:bg-[#0B2342] transition-colors disabled:opacity-60"
                     >
                       {isSavingInfo ? "Saving…" : "Save"}
                     </button>
@@ -1491,8 +1395,8 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                     { label: "Tumor Location", value: fieldValue("tumor_location") ?? "Not recorded" },
                   ].map((r) => (
                     <div key={r.label} className="flex justify-between items-start gap-4">
-                      <span className="text-[#8291A3] text-xs shrink-0">{r.label}</span>
-                      <span className={`text-xs text-right ${(r as any).mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#7C8794] italic" : "text-[#E7ECF2]"}`}>{r.value}</span>
+                      <span className="text-[#5B6877] text-xs shrink-0">{r.label}</span>
+                      <span className={`text-xs text-right ${(r as any).mono ? "font-mono" : ""} ${r.value === "Not recorded" ? "text-[#6B7785] italic" : "text-[#1B2733]"}`}>{r.value}</span>
                     </div>
                   ))}
                 </div>
@@ -1501,9 +1405,9 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
               <Card className="p-5">
                 <SectionHeader>Tumor Measurements</SectionHeader>
                 {fieldValue("tumor_dimensions") ? (
-                  <p className="text-sm text-[#C3CCD6] leading-relaxed">{fieldValue("tumor_dimensions")}</p>
+                  <p className="text-sm text-[#3D4B5C] leading-relaxed">{fieldValue("tumor_dimensions")}</p>
                 ) : (
-                  <p className="text-xs text-[#7C8794] italic">
+                  <p className="text-xs text-[#6B7785] italic">
                     Not yet recorded for this patient. Overall status is tracked on the Case Readiness page.
                   </p>
                 )}
@@ -1517,12 +1421,12 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                 <SectionHeader>Case Readiness</SectionHeader>
                 <div className="mb-3">
                   <div className="flex justify-between mb-1">
-                    <span className="text-xs text-[#8B96A3]">MDT Readiness</span>
-                    <span className="font-mono text-sm font-semibold text-amber-400">
+                    <span className="text-xs text-[#5B6877]">MDT Readiness</span>
+                    <span className="font-mono text-sm font-semibold text-amber-700">
                       {readinessSummary ? `${readinessSummary.readiness_pct}%` : "…"}
                     </span>
                   </div>
-                  <div className="h-2 bg-[#161B22] rounded-full overflow-hidden">
+                  <div className="h-2 bg-[#F6F8FA] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-amber-500 rounded-full"
                       style={{ width: `${readinessSummary?.readiness_pct ?? 0}%` }}
@@ -1531,17 +1435,17 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                 </div>
                 <div className="space-y-1.5 mb-4">
                   {readinessSummary?.missing_information.slice(0, 2).map((label) => (
-                    <div key={label} className="flex items-center gap-2 text-xs text-red-400">
-                      <span>✕</span> {label}
+                    <div key={label} className="flex items-center gap-2 text-xs text-red-700">
+                      <XIcon size={12} /> {label}
                     </div>
                   ))}
                   {readinessSummary && readinessSummary.missing_information.length === 0 && (
-                    <p className="text-xs text-[#8291A3] italic">Nothing missing</p>
+                    <p className="text-xs text-[#5B6877] italic">Nothing missing</p>
                   )}
                 </div>
                 <button
                   onClick={() => onNav("case-readiness")}
-                  className="w-full border border-[#232A34] text-[#C3CCD6] rounded py-2 text-xs font-medium hover:bg-[#0A0E14] transition-colors"
+                  className="w-full border border-[#D5DBE3] text-[#3D4B5C] rounded py-2 text-xs font-medium hover:bg-[#F6F8FA] transition-colors"
                 >
                   View Full Checklist
                 </button>
@@ -1551,34 +1455,15 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
               <Card className="p-5">
                 <SectionHeader>Clinical Assessment</SectionHeader>
                 {fieldValue("clinical_assessment") ? (
-                  <p className="text-sm text-[#C3CCD6] leading-relaxed">{fieldValue("clinical_assessment")}</p>
+                  <p className="text-sm text-[#3D4B5C] leading-relaxed">{fieldValue("clinical_assessment")}</p>
                 ) : (
-                  <p className="text-xs text-[#7C8794] italic">
+                  <p className="text-xs text-[#6B7785] italic">
                     Not yet recorded for this patient.
                   </p>
                 )}
               </Card>
 
               {/* Next appointment */}
-              <Card className="p-5">
-                <SectionHeader>Upcoming</SectionHeader>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#0EA5E9]" />
-                    <div>
-                      <p className="text-xs font-medium text-[#E7ECF2]">Tumor Board</p>
-                      <p className="text-[10px] text-[#8291A3]">Nov 14, 2024 · 2:00 PM</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#8291A3]" />
-                    <div>
-                      <p className="text-xs font-medium text-[#E7ECF2]">FAF Imaging</p>
-                      <p className="text-[10px] text-[#8291A3]">Nov 08, 2024 · Ocular Imaging</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
             </div>
           </div>
         )}
@@ -1590,25 +1475,25 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
         {activeTab === "molecular" && (
           <Card className="p-6 max-w-2xl">
             <SectionHeader>Molecular Testing</SectionHeader>
-            <p className="text-[10px] text-[#8291A3] italic mb-3">
+            <p className="text-[11px] text-[#5B6877] italic mb-3">
               For uveal melanoma, molecular testing (e.g. GEP) is used for metastatic risk stratification and surveillance planning — not for diagnosis, which remains clinical.
             </p>
             {(() => {
               const molecularItems = readinessSummary?.checklist?.filter((c) => c.category === "molecular") ?? [];
-              if (!readinessSummary) return <p className="text-xs text-[#8291A3]">Loading…</p>;
-              if (molecularItems.length === 0) return <p className="text-xs text-[#8291A3] italic">No molecular testing configured for this disease profile.</p>;
+              if (!readinessSummary) return <p className="text-xs text-[#5B6877]">Loading…</p>;
+              if (molecularItems.length === 0) return <p className="text-xs text-[#5B6877] italic">No molecular testing configured for this disease profile.</p>;
               return (
                 <div className="space-y-4">
                   {molecularItems.map((item) => (
-                    <div key={item.key} className="border border-[#232A34] rounded p-4">
+                    <div key={item.key} className="border border-[#D5DBE3] rounded p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="text-sm font-medium text-[#E7ECF2]">{item.field}</p>
-                          <p className="text-xs text-[#8B96A3]">{item.source ?? "Not yet ordered"}</p>
+                          <p className="text-sm font-medium text-[#1B2733]">{item.field}</p>
+                          <p className="text-xs text-[#5B6877]">{item.source ?? "Not yet ordered"}</p>
                         </div>
                         <StatusBadge status={item.required === false && item.status !== "complete" ? "optional" : item.status as any} />
                       </div>
-                      <p className="text-xs text-[#C3CCD6] mt-2">
+                      <p className="text-xs text-[#3D4B5C] mt-2">
                         {item.value ?? "Not yet recorded for this patient."}
                       </p>
                     </div>
@@ -1622,32 +1507,22 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
         {activeTab === "treatment" && (
           <Card className="p-6 max-w-2xl">
             <SectionHeader>Treatment History</SectionHeader>
-            <div className="text-sm text-[#8B96A3] italic">No prior treatment recorded. Awaiting multidisciplinary recommendation.</div>
+            <div className="text-sm text-[#5B6877] italic">No prior treatment recorded. Awaiting multidisciplinary recommendation.</div>
           </Card>
         )}
 
         {activeTab === "tasks" && (
-          <Card className="max-w-xl">
-            <div className="px-5 py-4 border-b border-[#161B22]">
-              <SectionHeader>Open Tasks</SectionHeader>
-            </div>
-            <div className="divide-y divide-[#0A0E14]">
-              {[
-                { task: "Order FAF imaging", due: "Nov 08, 2024", priority: "high", assignee: "Imaging Department" },
-                { task: "Obtain GEP result from Castle Biosciences", due: "Nov 10, 2024", priority: "high", assignee: "Dr. A. Reyes" },
-              ].map((t, i) => (
-                <div key={i} className="px-5 py-3.5 flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${t.priority === "high" ? "bg-red-500" : "bg-amber-400"}`} />
-                  <div className="flex-1">
-                    <p className="text-sm text-[#E7ECF2] font-medium">{t.task}</p>
-                    <p className="text-[11px] text-[#8291A3]">{t.assignee} · Due {t.due}</p>
-                  </div>
-                  <span className="text-[10px] font-medium text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded">
-                    {t.priority}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <Card className="max-w-xl p-5">
+            <SectionHeader>Open Tasks</SectionHeader>
+            <p className="text-sm text-[#5B6877]">
+              Open tasks for this case are tracked on the Case Readiness screen, where each outstanding item can be assigned to a team member.
+            </p>
+            <button
+              onClick={() => onNav("case-readiness")}
+              className="mt-4 border border-[#C4CCD6] text-[#3D4B5C] px-3 py-2 rounded text-sm font-medium hover:bg-[#F6F8FA] transition-colors"
+            >
+              Open Case Readiness
+            </button>
           </Card>
         )}
       </div>
@@ -1837,15 +1712,15 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
   };
 
   const iconFor = (s: string) => {
-    if (s === "complete") return <span className="text-emerald-400 font-bold">✓</span>;
-    if (s === "missing") return <span className="text-red-400 font-bold">✕</span>;
-    return <span className="text-amber-500 font-bold">⏳</span>;
+    if (s === "complete") return <span className="text-emerald-700"><CheckIcon size={14} /></span>;
+    if (s === "missing") return <span className="text-red-700"><XIcon size={14} /></span>;
+    return <span className="text-amber-700"><ClockIcon size={14} /></span>;
   };
 
   if (!readinessData) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#0A0E14]">
-        <p className="text-[#8291A3] text-sm">Loading case readiness…</p>
+      <div className="flex-1 flex items-center justify-center bg-[#FFFFFF]">
+        <p className="text-[#5B6877] text-sm">Loading case readiness…</p>
       </div>
     );
   }
@@ -1871,13 +1746,13 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNav("imaging")}
-              className="border border-[#232A34] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#0A0E14] transition-colors"
+              className="border border-[#D5DBE3] text-[#3D4B5C] px-3 py-2 rounded text-sm hover:bg-[#F6F8FA] transition-colors"
             >
               Order Imaging
             </button>
             <button
               onClick={() => onNav("tumor-board")}
-              className="bg-[#0F2D56] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#0F2D56]/90 transition-colors"
+              className="bg-[#0F2D56] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#0B2342] transition-colors"
             >
               Prepare MDT Case
             </button>
@@ -1885,32 +1760,32 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
         }
       />
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         {/* Readiness header card */}
         <Card className="p-6 mb-6">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <span className="text-3xl font-mono font-bold text-amber-400">{readiness}%</span>
-                <span className="text-lg font-semibold text-[#E7ECF2]">Case Readiness</span>
+                <span className="text-3xl font-mono font-bold text-amber-700">{readiness}%</span>
+                <span className="text-lg font-semibold text-[#1B2733]">Case Readiness</span>
               </div>
-              <div className="flex items-center gap-2 mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded text-sm text-amber-300">
+              <div className="flex items-center gap-2 mt-3 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
                 <AlertIcon size={14} />
                 <span className="font-medium">
                   {readinessData.ready_for_review
                     ? "Case is ready for multidisciplinary review."
                     : "Case is not ready for multidisciplinary review."}
                 </span>
-                <span className="text-amber-400">
+                <span className="text-amber-700">
                   {readinessData.missing_information.length} item(s) require resolution before tumor board presentation.
                 </span>
               </div>
             </div>
             <div className="w-48 shrink-0">
-              <div className="h-3 bg-[#161B22] rounded-full overflow-hidden mb-2">
+              <div className="h-3 bg-[#F6F8FA] rounded-full overflow-hidden mb-2">
                 <div className="h-full bg-amber-500 rounded-full" style={{ width: `${readiness}%` }} />
               </div>
-              <div className="flex justify-between text-[10px] text-[#8291A3]">
+              <div className="flex justify-between text-[11px] text-[#5B6877]">
                 <span>{complete} complete</span>
                 <span>{allItems.length} total</span>
               </div>
@@ -1918,22 +1793,22 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
           </div>
 
           {/* Missing items callout — now driven by the backend's missing_information list */}
-          <div className="mt-4 pt-4 border-t border-[#161B22]">
-            <p className="text-xs font-semibold text-[#C3CCD6] mb-3">Missing or Pending Information</p>
+          <div className="mt-4 pt-4 border-t border-[#E4E8ED]">
+            <p className="text-xs font-semibold text-[#3D4B5C] mb-3">Missing or Pending Information</p>
             <div className="grid grid-cols-2 gap-3">
               {readinessData.missing_information.length === 0 && (
-                <p className="text-xs text-[#8291A3] italic">Nothing missing — case is fully documented.</p>
+                <p className="text-xs text-[#5B6877] italic">Nothing missing — case is fully documented.</p>
               )}
               {readinessData.missing_information.map((label) => {
                 const existingTask = tasks.find((t) => t.description === `Resolve: ${label}` && t.status === "open");
                 return (
-                  <div key={label} className="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded">
-                    <span className="text-red-400 font-bold mt-0.5">✕</span>
+                  <div key={label} className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded">
+                    <span className="text-red-700  mt-0.5"><XIcon size={14} /></span>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-red-300">{label}</p>
+                      <p className="text-sm font-medium text-red-700">{label}</p>
 
                       {existingTask ? (
-                        <p className="mt-2 text-xs text-red-300">
+                        <p className="mt-2 text-xs text-red-700">
                           Assigned to <span className="font-medium">{existingTask.assignee_name}</span>
                         </p>
                       ) : assigningLabel === label ? (
@@ -1942,7 +1817,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                             autoFocus
                             value={assigneeUserId}
                             onChange={(e) => setAssigneeUserId(e.target.value)}
-                            className="text-xs border border-red-500/40 rounded px-2 py-1 bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-red-500"
+                            className="text-xs border border-red-200 rounded px-2 py-1 bg-[#FFFFFF] text-[#3D4B5C] focus:outline-none focus:border-red-500"
                           >
                             {users.length === 0 && <option value="">No accounts yet</option>}
                             {users.map((u) => (
@@ -1958,17 +1833,15 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                           </button>
                           <button
                             onClick={() => setAssigningLabel(null)}
-                            className="text-xs text-red-400 hover:text-red-400"
-                          >
-                            ✕
-                          </button>
+                            className="text-xs text-red-700 hover:text-red-700"
+                          >Cancel</button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setAssigningLabel(label)}
-                          className="mt-2 text-xs font-medium text-red-300 underline"
+                          className="mt-2 text-xs font-medium text-red-700 underline"
                         >
-                          Assign task →
+                          Assign task
                         </button>
                       )}
                     </div>
@@ -1983,16 +1856,16 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
             something. Also lets someone mark a task done directly here. */}
         {tasks.length > 0 && (
           <Card className="mb-6">
-            <div className="px-5 py-3.5 border-b border-[#0A0E14] bg-[#12161D]">
-              <h3 className="text-sm font-semibold text-[#E7ECF2]">Assigned Tasks</h3>
+            <div className="px-5 py-3.5 border-b border-[#E4E8ED] bg-[#FFFFFF]">
+              <h3 className="text-sm font-semibold text-[#1B2733]">Assigned Tasks</h3>
             </div>
-            <div className="divide-y divide-[#0A0E14]">
+            <div className="divide-y divide-[#E4E8ED]">
               {tasks.map((task) => (
                 <div key={task.id} className="px-5 py-3 flex items-center gap-4">
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${task.status === "done" ? "bg-emerald-400" : "bg-amber-400"}`} />
                   <div className="flex-1">
-                    <p className={`text-sm font-medium ${task.status === "done" ? "text-[#8291A3] line-through" : "text-[#E7ECF2]"}`}>{task.description}</p>
-                    <p className="text-[11px] text-[#8291A3]">
+                    <p className={`text-sm font-medium ${task.status === "done" ? "text-[#5B6877] line-through" : "text-[#1B2733]"}`}>{task.description}</p>
+                    <p className="text-xs text-[#5B6877]">
                       {task.assignee_name ?? "Unassigned"}{task.due_date ? ` · Due ${task.due_date}` : ""}
                     </p>
                   </div>
@@ -2000,7 +1873,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                     <button
                       onClick={() => handleCompleteTask(task.id)}
                       disabled={completingTaskId === task.id}
-                      className="text-xs text-[#0EA5E9] hover:underline shrink-0 disabled:opacity-50"
+                      className="text-xs text-[#0B63B6] hover:underline shrink-0 disabled:opacity-50"
                     >
                       {completingTaskId === task.id ? "Saving…" : "Mark Done"}
                     </button>
@@ -2015,34 +1888,34 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
         <div className="space-y-4">
           {Object.entries(grouped).map(([category, catItems]) => (
             <Card key={category}>
-              <div className="px-5 py-3.5 border-b border-[#0A0E14] flex items-center justify-between bg-[#12161D]">
-                <h3 className="text-sm font-semibold text-[#E7ECF2] capitalize">{category.replace(/_/g, " ")}</h3>
-                <span className="font-mono text-[11px] text-[#8291A3]">
+              <div className="px-5 py-3.5 border-b border-[#E4E8ED] flex items-center justify-between bg-[#FFFFFF]">
+                <h3 className="text-sm font-semibold text-[#1B2733] capitalize">{category.replace(/_/g, " ")}</h3>
+                <span className="font-mono text-xs text-[#5B6877]">
                   {catItems.filter((i) => i.status === "complete").length}/{catItems.length} complete
                 </span>
               </div>
-              <div className="divide-y divide-[#0A0E14]">
+              <div className="divide-y divide-[#E4E8ED]">
                 {catItems.map((item) => (
-                  <div key={item.field} className={`px-5 py-3 ${item.status === "missing" ? "bg-red-500/10/40" : item.status === "pending" ? "bg-amber-500/10/30" : ""}`}>
+                  <div key={item.field} className={`px-5 py-3 ${item.status === "missing" ? "bg-red-50" : item.status === "pending" ? "bg-amber-50" : ""}`}>
                     <div className="flex items-center gap-4">
                       <div className="w-5 text-center text-sm shrink-0">{iconFor(item.status)}</div>
                       <div className="flex-1">
-                        <p className="text-sm text-[#E7ECF2] font-medium">{item.field}</p>
+                        <p className="text-sm text-[#1B2733] font-medium">{item.field}</p>
                         {item.status === "complete" && item.value && (
-                          <p className="text-xs text-[#8B96A3] mt-1 leading-relaxed">
+                          <p className="text-xs text-[#5B6877] mt-1 leading-relaxed">
                             {item.data_type === "boolean" ? (item.value === "true" ? "Present" : "Absent") : item.value}
                           </p>
                         )}
                         {item.status === "complete" && (item.measurement_method || item.measurement_precision || item.measurement_length_type) && (
                           <div className="flex flex-wrap gap-2 mt-1.5">
                             {item.measurement_method && (
-                              <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-1.5 py-0.5 rounded">{item.measurement_method}</span>
+                              <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-1.5 py-0.5 rounded">{item.measurement_method}</span>
                             )}
                             {item.measurement_precision && (
-                              <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-1.5 py-0.5 rounded">{item.measurement_precision}</span>
+                              <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-1.5 py-0.5 rounded">{item.measurement_precision}</span>
                             )}
                             {item.measurement_length_type && (
-                              <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-1.5 py-0.5 rounded">{item.measurement_length_type}</span>
+                              <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-1.5 py-0.5 rounded">{item.measurement_length_type}</span>
                             )}
                           </div>
                         )}
@@ -2051,7 +1924,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                       {resolveFormKey !== item.key && confirmingDeleteKey !== item.key && (
                         <button
                           onClick={() => openResolveForm(item.key, item)}
-                          className="text-xs text-[#0EA5E9] hover:underline shrink-0"
+                          className="text-xs text-[#0B63B6] hover:underline shrink-0"
                         >
                           {item.status === "complete" ? "Edit" : "Resolve"}
                         </button>
@@ -2063,14 +1936,14 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                       {item.status !== "missing" && resolveFormKey !== item.key && confirmingDeleteKey !== item.key && (
                         <button
                           onClick={() => setConfirmingDeleteKey(item.key)}
-                          className="text-xs text-red-400 hover:underline shrink-0"
+                          className="text-xs text-red-700 hover:underline shrink-0"
                         >
                           Delete
                         </button>
                       )}
                       {confirmingDeleteKey === item.key && (
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-[#C3CCD6]">Delete this?</span>
+                          <span className="text-xs text-[#3D4B5C]">Delete this?</span>
                           <button
                             onClick={() => handleDeleteValue(item.key)}
                             disabled={deletingKey === item.key}
@@ -2080,7 +1953,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                           </button>
                           <button
                             onClick={() => setConfirmingDeleteKey(null)}
-                            className="text-xs text-[#8B96A3] hover:text-[#C3CCD6]"
+                            className="text-xs text-[#5B6877] hover:text-[#1B2733]"
                           >
                             Cancel
                           </button>
@@ -2091,11 +1964,11 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                     {resolveFormKey === item.key && (
                       <div className="mt-3 ml-9 space-y-2 max-w-md">
                         <div>
-                          <label className="block text-[10px] text-[#8291A3] mb-1">Status</label>
+                          <label className="block text-[11px] text-[#5B6877] mb-1">Status</label>
                           <select
                             value={resolveStatus}
                             onChange={(e) => setResolveStatus(e.target.value)}
-                            className="border border-[#2E3742] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                            className="border border-[#C4CCD6] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B63B6]"
                           >
                             <option value="complete">Complete</option>
                             <option value="pending">Pending</option>
@@ -2114,8 +1987,8 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                               onClick={() => setResolveValue("true")}
                               className={`flex-1 text-xs font-medium px-3 py-2 rounded border transition-colors ${
                                 resolveValue === "true"
-                                  ? "bg-amber-500/20 border-amber-500 text-amber-300"
-                                  : "border-[#2E3742] text-[#8B96A3] hover:bg-[#161B22]"
+                                  ? "bg-amber-50 border-amber-500 text-amber-700"
+                                  : "border-[#C4CCD6] text-[#5B6877] hover:bg-[#EEF2F6]"
                               }`}
                             >
                               Present
@@ -2125,8 +1998,8 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                               onClick={() => setResolveValue("false")}
                               className={`flex-1 text-xs font-medium px-3 py-2 rounded border transition-colors ${
                                 resolveValue === "false"
-                                  ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
-                                  : "border-[#2E3742] text-[#8B96A3] hover:bg-[#161B22]"
+                                  ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                                  : "border-[#C4CCD6] text-[#5B6877] hover:bg-[#EEF2F6]"
                               }`}
                             >
                               Absent
@@ -2144,7 +2017,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                                 : "Enter the finding…"
                             }
                             rows={3}
-                            className="w-full border border-[#2E3742] rounded px-2.5 py-2 text-xs focus:outline-none focus:border-[#0EA5E9] resize-none"
+                            className="w-full border border-[#C4CCD6] rounded px-2.5 py-2 text-xs focus:outline-none focus:border-[#0B63B6] resize-none"
                           />
                         )}
 
@@ -2158,34 +2031,34 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                           <>
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <label className="block text-[9px] text-[#8291A3] mb-0.5">Largest basal diameter (mm)</label>
+                                <label className="block text-[11px] text-[#5B6877] mb-0.5">Largest basal diameter (mm)</label>
                                 <input
                                   type="number"
                                   step="0.1"
                                   value={resolveBasalDiameter}
                                   onChange={(e) => setResolveBasalDiameter(e.target.value)}
                                   placeholder="e.g. 10.1"
-                                  className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-[11px] bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-[#0EA5E9]"
+                                  className="w-full border border-[#C4CCD6] rounded px-2 py-1.5 text-xs bg-[#FFFFFF] text-[#3D4B5C] focus:outline-none focus:border-[#0B63B6]"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[9px] text-[#8291A3] mb-0.5">Apical height (mm)</label>
+                                <label className="block text-[11px] text-[#5B6877] mb-0.5">Apical height (mm)</label>
                                 <input
                                   type="number"
                                   step="0.1"
                                   value={resolveApicalHeight}
                                   onChange={(e) => setResolveApicalHeight(e.target.value)}
                                   placeholder="e.g. 3.9"
-                                  className="w-full border border-[#2E3742] rounded px-2 py-1.5 text-[11px] bg-[#12161D] text-[#C3CCD6] focus:outline-none focus:border-[#0EA5E9]"
+                                  className="w-full border border-[#C4CCD6] rounded px-2 py-1.5 text-xs bg-[#FFFFFF] text-[#3D4B5C] focus:outline-none focus:border-[#0B63B6]"
                                 />
                               </div>
                             </div>
-                            <p className="text-[9px] text-[#7C8794] -mt-1">These two numbers are what let tumor size be tracked as a real trend over time.</p>
+                            <p className="text-[11px] text-[#6B7785] -mt-1">These two numbers are what let tumor size be tracked as a real trend over time.</p>
                             <div className="grid grid-cols-3 gap-2">
                             <select
                               value={resolveMethod}
                               onChange={(e) => setResolveMethod(e.target.value)}
-                              className="border border-[#2E3742] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                              className="border border-[#C4CCD6] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B63B6]"
                             >
                               <option value="">Method…</option>
                               <option value="Indirect ophthalmoscopy / fundus exam">Ophthalmoscopy</option>
@@ -2199,7 +2072,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                             <select
                               value={resolvePrecision}
                               onChange={(e) => setResolvePrecision(e.target.value)}
-                              className="border border-[#2E3742] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                              className="border border-[#C4CCD6] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B63B6]"
                             >
                               <option value="">Precision…</option>
                               <option value="Nearest 0.1 mm">Nearest 0.1 mm</option>
@@ -2210,7 +2083,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                             <select
                               value={resolveLengthType}
                               onChange={(e) => setResolveLengthType(e.target.value)}
-                              className="border border-[#2E3742] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#0EA5E9]"
+                              className="border border-[#C4CCD6] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B63B6]"
                             >
                               <option value="">Chord/Arc…</option>
                               <option value="Chord length">Chord length</option>
@@ -2224,14 +2097,14 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
                         <div className="flex gap-2">
                           <button
                             onClick={() => setResolveFormKey(null)}
-                            className="text-xs text-[#8B96A3] px-2.5 py-1.5 rounded hover:bg-[#161B22] transition-colors"
+                            className="text-xs text-[#5B6877] px-2.5 py-1.5 rounded hover:bg-[#EEF2F6] transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={() => handleResolveSubmit(item.key)}
                             disabled={resolvingKey === item.key || (resolveStatus !== "missing" && !resolveValue.trim())}
-                            className="text-xs font-medium text-white bg-[#0EA5E9] px-3 py-1.5 rounded hover:bg-[#0284C7] transition-colors disabled:opacity-50"
+                            className="text-xs font-medium text-white bg-[#0B63B6] px-3 py-1.5 rounded hover:bg-[#094F93] transition-colors disabled:opacity-50"
                           >
                             {resolvingKey === item.key ? "Saving…" : "Save"}
                           </button>
@@ -2470,7 +2343,7 @@ function SeriesViewer({ caseId, label, images, startIndex, onClose, onDeleteImag
               style={{ maxHeight: "calc(100vh - 220px)" }}
             />
           ) : failed[shown.id] ? (
-            <p className="text-red-300 text-sm">Couldn't load this image.</p>
+            <p className="text-red-700 text-sm">Unable to load this image.</p>
           ) : (
             <p className="text-white/50 text-sm">Loading…</p>
           )}
@@ -2494,11 +2367,11 @@ function SeriesViewer({ caseId, label, images, startIndex, onClose, onDeleteImag
             value={current}
             onChange={(e) => goTo(Number(e.target.value))}
             aria-label="Scrub through images"
-            className="w-full accent-[#0EA5E9]"
+            className="w-full accent-[#0B63B6]"
           />
         )}
         <div className="flex items-center justify-between gap-4">
-          <p className="text-white/40 text-[11px]">
+          <p className="text-white/40 text-xs">
             {total > 1 ? "Scroll, use the arrow keys, or drag the slider to move through the images. Esc closes." : "Esc closes."}
           </p>
           {confirmingDelete ? (
@@ -2521,13 +2394,13 @@ function SeriesViewer({ caseId, label, images, startIndex, onClose, onDeleteImag
           ) : (
             <button
               onClick={() => setConfirmingDelete(true)}
-              className="text-xs text-red-400 hover:underline shrink-0"
+              className="text-xs text-red-700 hover:underline shrink-0"
             >
               Delete this image
             </button>
           )}
         </div>
-        {deleteError && <p className="text-xs text-red-300">{deleteError}</p>}
+        {deleteError && <p className="text-xs text-red-700">{deleteError}</p>}
       </div>
     </div>
   );
@@ -2798,7 +2671,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
   };
 
   if (!imagingItems) {
-    return <p className="text-[#8291A3] text-sm">Loading imaging studies…</p>;
+    return <p className="text-[#5B6877] text-sm">Loading imaging studies…</p>;
   }
 
   const completeCount = imagingItems.filter((s) => s.status === "complete").length;
@@ -2808,41 +2681,41 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[#8B96A3]">{completeCount}/{imagingItems.length} studies complete</span>
-          <div className="h-1.5 w-32 bg-[#161B22] rounded-full overflow-hidden">
+          <span className="text-xs text-[#5B6877]">{completeCount}/{imagingItems.length} studies complete</span>
+          <div className="h-1.5 w-32 bg-[#F6F8FA] rounded-full overflow-hidden">
             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
           </div>
         </div>
         <button
           onClick={handleOrderAllMissing}
           disabled={isBulkOrdering || imagingItems.filter((s) => s.status === "missing").length === 0}
-          className="bg-[#0F2D56] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-50"
+          className="bg-[#0F2D56] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#0B2342] transition-colors disabled:opacity-50"
         >
           {isBulkOrdering ? "Ordering…" : "+ Order Missing Imaging"}
         </button>
       </div>
 
       {uploadError && (
-        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">{uploadError}</p>
+        <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">{uploadError}</p>
       )}
 
       <Card>
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[#161B22] bg-[#12161D]">
+            <tr className="border-b border-[#E4E8ED] bg-[#FFFFFF]">
               {["Study", "Status", "Image", "Source / Technician", "Findings", ""].map((h) => (
-                <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">{h}</th>
+                <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold text-[#5B6877]">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#0A0E14]">
+          <tbody className="divide-y divide-[#E4E8ED]">
             {imagingItems.map((s) => {
               const studyImages = imagesForStudy(s.key);
               const hasImage = studyImages.length > 0;
               return (
-              <tr key={s.key} className={`${s.status === "missing" ? "bg-red-500/10/40" : s.status === "pending" ? "bg-amber-500/10/30" : "hover:bg-[#0A0E14]"} transition-colors`}>
+              <tr key={s.key} className={`${s.status === "missing" ? "bg-red-50" : s.status === "pending" ? "bg-amber-50" : "hover:bg-[#F6F8FA]"} transition-colors`}>
                 <td className="px-5 py-3.5">
-                  <p className="text-sm font-medium text-[#E7ECF2]">{s.field}</p>
+                  <p className="text-sm font-medium text-[#1B2733]">{s.field}</p>
                 </td>
                 <td className="px-5 py-3.5">
                   <StatusBadge status={s.status as any} />
@@ -2851,25 +2724,25 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                   {hasImage ? (
                     <button
                       onClick={() => setViewer({ fieldKey: s.key, label: s.field, index: 0 })}
-                      className="relative inline-block w-28 h-28 hover:opacity-80 hover:ring-2 hover:ring-[#0EA5E9] rounded transition-all"
+                      className="relative inline-block w-28 h-28 hover:opacity-80 hover:ring-2 hover:ring-[#0B63B6] rounded transition-all"
                       title={studyImages.length > 1 ? `Open all ${studyImages.length} images` : "Click to view full size"}
                     >
                       <AuthenticatedImage
                         caseId={caseId}
                         imageId={studyImages[0].id}
                         alt={`${s.field} image`}
-                        className="w-28 h-28 object-cover rounded border border-[#232A34]"
+                        className="w-28 h-28 object-cover rounded border border-[#D5DBE3]"
                       />
                       {studyImages.length > 1 && (
-                        <span className="absolute bottom-1 right-1 text-[10px] font-mono bg-black/75 text-white px-1.5 py-0.5 rounded">
+                        <span className="absolute bottom-1 right-1 text-[11px] font-mono bg-black/75 text-white px-1.5 py-0.5 rounded">
                           {studyImages.length} images
                         </span>
                       )}
                     </button>
                   ) : (
-                    <span className="text-[10px] text-[#7C8794] italic">No image</span>
+                    <span className="text-[11px] text-[#6B7785] italic">No image</span>
                   )}
-                  <label className="block mt-1 text-[10px] text-[#0EA5E9] hover:underline cursor-pointer">
+                  <label className="block mt-1 text-[11px] text-[#0B63B6] hover:underline cursor-pointer">
                     {uploadingKey === s.key
                       ? uploadProgress && uploadProgress.key === s.key
                         ? `Uploading ${Math.min(uploadProgress.done + 1, uploadProgress.total)} of ${uploadProgress.total}…`
@@ -2879,7 +2752,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                       type="file"
                       accept="image/*"
                       multiple
-                      className="bg-[#12161D] hidden"
+                      className="bg-[#FFFFFF] hidden"
                       disabled={uploadingKey === s.key}
                       onChange={(e) => {
                         const files = Array.from(e.target.files ?? []);
@@ -2888,12 +2761,12 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                       }}
                     />
                   </label>
-                  <label className="block mt-0.5 text-[10px] text-[#0EA5E9] hover:underline cursor-pointer">
+                  <label className="block mt-0.5 text-[11px] text-[#0B63B6] hover:underline cursor-pointer">
                     {importingKey === s.key ? "Importing…" : "Import DICOM/PDF"}
                     <input
                       type="file"
                       accept=".dcm,.dicom,application/dicom,.pdf,application/pdf"
-                      className="bg-[#12161D] hidden"
+                      className="bg-[#FFFFFF] hidden"
                       disabled={importingKey === s.key}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
@@ -2905,24 +2778,24 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                   {hasImage && confirmingImageDeleteKey !== s.key && (
                     <button
                       onClick={() => setConfirmingImageDeleteKey(s.key)}
-                      className="block mt-0.5 text-[10px] text-red-400 hover:underline"
+                      className="block mt-0.5 text-[11px] text-red-700 hover:underline"
                     >
                       {studyImages.length > 1 ? "Delete all" : "Delete"}
                     </button>
                   )}
                   {confirmingImageDeleteKey === s.key && (
                     <div className="mt-1 flex items-center gap-1.5">
-                      <span className="text-[10px] text-[#C3CCD6]">{studyImages.length > 1 ? `Delete all ${studyImages.length}?` : "Sure?"}</span>
+                      <span className="text-[11px] text-[#3D4B5C]">{studyImages.length > 1 ? `Delete all ${studyImages.length}?` : "Sure?"}</span>
                       <button
                         onClick={() => handleDeleteImage(s.key)}
                         disabled={deletingImageKey === s.key}
-                        className="text-[10px] font-medium text-white bg-red-500 px-1.5 py-0.5 rounded hover:bg-red-600 transition-colors disabled:opacity-50"
+                        className="text-[11px] font-medium text-white bg-red-500 px-1.5 py-0.5 rounded hover:bg-red-600 transition-colors disabled:opacity-50"
                       >
                         {deletingImageKey === s.key ? "…" : "Yes"}
                       </button>
                       <button
                         onClick={() => setConfirmingImageDeleteKey(null)}
-                        className="text-[10px] text-[#8B96A3] hover:text-[#C3CCD6]"
+                        className="text-[11px] text-[#5B6877] hover:text-[#1B2733]"
                       >
                         No
                       </button>
@@ -2930,10 +2803,10 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                   )}
                 </td>
                 <td className="px-5 py-3.5">
-                  <p className={`text-xs ${s.source ? "text-[#C3CCD6]" : "text-[#7C8794]"}`}>{s.source ?? "Not assigned"}</p>
+                  <p className={`text-xs ${s.source ? "text-[#3D4B5C]" : "text-[#6B7785]"}`}>{s.source ?? "Not assigned"}</p>
                 </td>
                 <td className="px-5 py-3.5 max-w-xs">
-                  <p className={`text-xs leading-relaxed ${s.status === "missing" ? "text-red-400 italic" : s.status === "pending" ? "text-amber-400 italic" : "text-[#C3CCD6]"}`}>
+                  <p className={`text-xs leading-relaxed ${s.status === "missing" ? "text-red-700 italic" : s.status === "pending" ? "text-amber-700 italic" : "text-[#3D4B5C]"}`}>
                     {s.value ?? (s.status === "pending" ? "Awaiting results" : "Not yet acquired")}
                   </p>
                 </td>
@@ -2955,7 +2828,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                       {orderingKey === s.key ? "Saving…" : "Mark Result Received"}
                     </button>
                   ) : (
-                    <span className="text-xs text-[#7C8794]">—</span>
+                    <span className="text-xs text-[#6B7785]">—</span>
                   )}
                 </td>
               </tr>
@@ -2971,26 +2844,26 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
         <SectionHeader>Tumor Measurements</SectionHeader>
         {measurementItem?.value ? (
           <div>
-            <p className="text-sm text-[#C3CCD6] leading-relaxed">{measurementItem.value}</p>
+            <p className="text-sm text-[#3D4B5C] leading-relaxed">{measurementItem.value}</p>
             {(measurementItem.measurement_method || measurementItem.measurement_precision || measurementItem.measurement_length_type) && (
               <div className="flex flex-wrap gap-3 mt-2">
                 {measurementItem.measurement_method && (
-                  <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">Method: {measurementItem.measurement_method}</span>
+                  <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-2 py-0.5 rounded">Method: {measurementItem.measurement_method}</span>
                 )}
                 {measurementItem.measurement_precision && (
-                  <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">Precision: {measurementItem.measurement_precision}</span>
+                  <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-2 py-0.5 rounded">Precision: {measurementItem.measurement_precision}</span>
                 )}
                 {measurementItem.measurement_length_type && (
-                  <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">{measurementItem.measurement_length_type}</span>
+                  <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-2 py-0.5 rounded">{measurementItem.measurement_length_type}</span>
                 )}
               </div>
             )}
             {measurementItem.source && (
-              <p className="text-[10px] text-[#7C8794] mt-2">Source: {measurementItem.source}</p>
+              <p className="text-[11px] text-[#6B7785] mt-2">Source: {measurementItem.source}</p>
             )}
           </div>
         ) : (
-          <p className="text-xs text-[#7C8794] italic">
+          <p className="text-xs text-[#6B7785] italic">
             Not yet recorded for this patient — see the "Tumor measurements" status on the Case Readiness page.
           </p>
         )}
@@ -2999,18 +2872,18 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
             growth (or stability) across visits is genuinely visible,
             not just the single most recent number. */}
         {measurementHistory.length > 1 && (
-          <div className="mt-4 pt-4 border-t border-[#232A34]">
-            <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-2">History ({measurementHistory.length} recordings)</p>
+          <div className="mt-4 pt-4 border-t border-[#D5DBE3]">
+            <p className="text-[11px] font-semibold text-[#5B6877] mb-2">History ({measurementHistory.length} recordings)</p>
             <div className="space-y-2">
               {measurementHistory.map((h, i) => {
                 const prev = i > 0 ? measurementHistory[i - 1] : null;
                 let changeLabel: string | null = null;
-                let changeColor = "text-[#8291A3]";
+                let changeColor = "text-[#5B6877]";
                 if (prev && h.basal_diameter_mm != null && prev.basal_diameter_mm != null) {
                   const diff = h.basal_diameter_mm - prev.basal_diameter_mm;
                   if (Math.abs(diff) >= 0.1) {
                     changeLabel = `${diff > 0 ? "+" : ""}${diff.toFixed(1)}mm basal diameter`;
-                    changeColor = diff > 0 ? "text-amber-400" : "text-emerald-400";
+                    changeColor = diff > 0 ? "text-amber-700" : "text-emerald-700";
                   } else {
                     changeLabel = "No significant change";
                   }
@@ -3018,10 +2891,10 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
                 return (
                   <div key={i} className="flex items-start justify-between gap-3 text-xs">
                     <div>
-                      <p className="text-[#C3CCD6]">{h.value}</p>
-                      {changeLabel && <p className={`text-[10px] mt-0.5 ${changeColor}`}>{changeLabel}</p>}
+                      <p className="text-[#3D4B5C]">{h.value}</p>
+                      {changeLabel && <p className={`text-[11px] mt-0.5 ${changeColor}`}>{changeLabel}</p>}
                     </div>
-                    <span className="text-[10px] text-[#7C8794] shrink-0">
+                    <span className="text-[11px] text-[#6B7785] shrink-0">
                       {h.recorded_at ? new Date(h.recorded_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
                     </span>
                   </div>
@@ -3064,7 +2937,7 @@ function ImagingScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
         title="Imaging & Measurements"
         subtitle={caseInfo ? `${caseInfo.patient} · ${caseInfo.mrn}` : ""}
       />
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         <ImagingContent onNav={onNav} caseId={caseId} />
       </div>
     </div>
@@ -3121,6 +2994,12 @@ type CasePacket = {
     risk_estimate: string;
     mnemonic: string;
   } | null;
+  gep_risk: {
+    gep_class: string;
+    risk_label: "Low" | "Intermediate" | "High" | null;
+    chromosome_3_status: string | null;
+    test_name: string;
+  } | null;
 };
 
 function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
@@ -3140,14 +3019,14 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
   }, [caseId]);
 
   const trendLabel =
-    packet?.measurement?.trend === "growing" ? "▲ Growing since last measurement"
-    : packet?.measurement?.trend === "shrinking" ? "▼ Shrinking since last measurement"
-    : packet?.measurement?.trend === "stable" ? "● Stable since last measurement"
+    packet?.measurement?.trend === "growing" ? "Growing since last measurement"
+    : packet?.measurement?.trend === "shrinking" ? "Shrinking since last measurement"
+    : packet?.measurement?.trend === "stable" ? "Stable since last measurement"
     : null;
   const trendColor =
-    packet?.measurement?.trend === "growing" ? "text-amber-400"
-    : packet?.measurement?.trend === "shrinking" ? "text-emerald-400"
-    : "text-[#8291A3]";
+    packet?.measurement?.trend === "growing" ? "text-amber-700"
+    : packet?.measurement?.trend === "shrinking" ? "text-emerald-700"
+    : "text-[#5B6877]";
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -3158,14 +3037,14 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNav("patient")}
-              className="border border-[#232A34] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#0A0E14] transition-colors"
+              className="border border-[#D5DBE3] text-[#3D4B5C] px-3 py-2 rounded text-sm hover:bg-[#F6F8FA] transition-colors"
             >
               Back to Patient
             </button>
             <button
               onClick={() => window.print()}
               disabled={!packet}
-              className="bg-[#0F2D56] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-50"
+              className="bg-[#0F2D56] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#0B2342] transition-colors disabled:opacity-50"
             >
               Print / Save as PDF
             </button>
@@ -3173,11 +3052,11 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
         }
       />
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         {loadError && (
-          <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2 mb-4">{loadError}</p>
+          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 mb-4">{loadError}</p>
         )}
-        {!packet && !loadError && <p className="text-[#8291A3] text-sm">Assembling case packet…</p>}
+        {!packet && !loadError && <p className="text-[#5B6877] text-sm">Assembling case packet…</p>}
 
         {packet && (
           <div className="max-w-3xl mx-auto space-y-4">
@@ -3185,27 +3064,27 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
             <Card className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-[#E7ECF2]">{packet.patient_name}</h2>
-                  <p className="text-sm text-[#8B96A3] mt-0.5">
+                  <h2 className="text-xl font-semibold text-[#1B2733]">{packet.patient_name}</h2>
+                  <p className="text-sm text-[#5B6877] mt-0.5">
                     MRN {packet.mrn}
                     {packet.dob ? ` · DOB ${packet.dob}` : ""}
                     {packet.laterality ? ` · ${packet.laterality}` : ""}
                   </p>
-                  <p className="text-sm text-[#C3CCD6] mt-1">{packet.diagnosis ?? "No diagnosis on file"}</p>
-                  <p className="text-xs text-[#8291A3] mt-1">{packet.disease_profile} · {packet.care_stage}</p>
+                  <p className="text-sm text-[#3D4B5C] mt-1">{packet.diagnosis ?? "No diagnosis on file"}</p>
+                  <p className="text-xs text-[#5B6877] mt-1">{packet.disease_profile} · {packet.care_stage}</p>
                 </div>
                 <div className="text-right">
                   <StatusBadge status={packet.ready_for_review ? "complete" : packet.readiness_pct >= 70 ? "warning" : "missing"} />
-                  <p className="text-xs text-[#8B96A3] mt-1">{packet.readiness_pct}% ready</p>
+                  <p className="text-xs text-[#5B6877] mt-1">{packet.readiness_pct}% ready</p>
                 </div>
               </div>
               {!packet.ready_for_review && packet.missing_information.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-[#232A34]">
-                  <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Still missing</p>
-                  <p className="text-xs text-amber-400">{packet.missing_information.join(", ")}</p>
+                <div className="mt-3 pt-3 border-t border-[#D5DBE3]">
+                  <p className="text-[11px] font-semibold text-[#5B6877] mb-1">Still missing</p>
+                  <p className="text-xs text-amber-700">{packet.missing_information.join(", ")}</p>
                 </div>
               )}
-              <p className="text-[10px] text-[#7C8794] mt-3">
+              <p className="text-[11px] text-[#6B7785] mt-3">
                 Generated {new Date(packet.generated_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
               </p>
             </Card>
@@ -3217,33 +3096,117 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
             {packet.tfsom_risk && (
               <Card
                 className={`p-5 border-l-4 ${
+                  packet.tfsom_risk.risk_label === "High"
+                    ? "border-l-red-500"
+                    : packet.tfsom_risk.risk_label === "Moderate"
+                    ? "border-l-amber-500"
+                    : "border-l-emerald-500"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <SectionHeader>TFSOM-UHHD Growth Risk</SectionHeader>
+                    <p className="text-xs text-[#5B6877] mt-1">{packet.tfsom_risk.risk_estimate}</p>
+                    {packet.tfsom_risk.factors_present.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {packet.tfsom_risk.factors_present.map((f) => (
+                          <span key={f} className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-[#6B7785] mt-2">
+                      {packet.tfsom_risk.factors_assessed} of {packet.tfsom_risk.factors_total} factors assessed
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-1 rounded shrink-0 ${
+                      packet.tfsom_risk.risk_label === "High"
+                        ? "bg-red-50 text-red-700"
+                        : packet.tfsom_risk.risk_label === "Moderate"
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-emerald-50 text-emerald-700"
+                    }`}
+                  >
+                    {packet.tfsom_risk.risk_label}
+                  </span>
+                </div>
+              </Card>
+            )}
+
+            {/* GEP (DecisionDx-UM) metastatic-risk result — a DIFFERENT
+                axis from TFSOM above: TFSOM estimates a nevus's risk of
+                becoming melanoma in the first place, this estimates an
+                already-diagnosed melanoma's risk of spreading. Only
+                shown once a result has actually been recorded. */}
+            {packet.gep_risk && (
+              <Card
+                className={`p-5 border-l-4 ${
+                  packet.gep_risk.risk_label === "High"
+                    ? "border-l-red-500"
+                    : packet.gep_risk.risk_label === "Intermediate"
+                    ? "border-l-amber-500"
+                    : packet.gep_risk.risk_label === "Low"
+                    ? "border-l-emerald-500"
+                    : "border-l-[#C4CCD6]"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <SectionHeader>Gene Expression Profile ({packet.gep_risk.test_name})</SectionHeader>
+                    <p className="text-xs text-[#5B6877] mt-1">Class {packet.gep_risk.gep_class}</p>
+                    {packet.gep_risk.chromosome_3_status && (
+                      <p className="text-[11px] text-[#6B7785] mt-1">Chromosome 3: {packet.gep_risk.chromosome_3_status}</p>
+                    )}
+                  </div>
+                  {packet.gep_risk.risk_label ? (
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-1 rounded shrink-0 ${
+                        packet.gep_risk.risk_label === "High"
+                          ? "bg-red-50 text-red-700"
+                          : packet.gep_risk.risk_label === "Intermediate"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-emerald-50 text-emerald-700"
+                      }`}
+                    >
+                      {packet.gep_risk.risk_label} metastatic risk
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded shrink-0 bg-[#F6F8FA] text-[#5B6877]">
+                      Unrecognized class
+                    </span>
+                  )}
+                </div>
+              </Card>
+            )}
 
             {/* Current measurement */}
             <Card className="p-5">
               <SectionHeader>Current Measurement</SectionHeader>
               {packet.measurement ? (
                 <div>
-                  <p className="text-sm text-[#C3CCD6]">{packet.measurement.value}</p>
+                  <p className="text-sm text-[#3D4B5C]">{packet.measurement.value}</p>
                   {trendLabel && <p className={`text-xs mt-1 font-medium ${trendColor}`}>{trendLabel}</p>}
                   <div className="flex flex-wrap gap-2 mt-2">
                     {packet.measurement.method && (
-                      <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">Method: {packet.measurement.method}</span>
+                      <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-2 py-0.5 rounded">Method: {packet.measurement.method}</span>
                     )}
                     {packet.measurement.precision && (
-                      <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">Precision: {packet.measurement.precision}</span>
+                      <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-2 py-0.5 rounded">Precision: {packet.measurement.precision}</span>
                     )}
                     {packet.measurement.length_type && (
-                      <span className="text-[10px] text-[#8B96A3] bg-[#161B22] px-2 py-0.5 rounded">{packet.measurement.length_type}</span>
+                      <span className="text-[11px] text-[#5B6877] bg-[#F6F8FA] px-2 py-0.5 rounded">{packet.measurement.length_type}</span>
                     )}
                   </div>
                   {packet.measurement.recorded_at && (
-                    <p className="text-[10px] text-[#7C8794] mt-2">
+                    <p className="text-[11px] text-[#6B7785] mt-2">
                       Recorded {new Date(packet.measurement.recorded_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-[#7C8794] italic">Not yet recorded for this patient.</p>
+                <p className="text-xs text-[#6B7785] italic">Not yet recorded for this patient.</p>
               )}
             </Card>
 
@@ -3251,7 +3214,7 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
             <Card className="p-5">
               <SectionHeader>Key Images</SectionHeader>
               {packet.key_images.length === 0 ? (
-                <p className="text-xs text-[#7C8794] italic">No images uploaded for this case yet.</p>
+                <p className="text-xs text-[#6B7785] italic">No images uploaded for this case yet.</p>
               ) : (
                 <div className="grid grid-cols-3 gap-3">
                   {packet.key_images.map((img) => (
@@ -3260,11 +3223,11 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                         caseId={caseId}
                         imageId={img.image_id}
                         alt={img.field_label}
-                        className="w-full h-32 object-cover rounded border border-[#232A34]"
+                        className="w-full h-32 object-cover rounded border border-[#D5DBE3]"
                       />
-                      <p className="text-xs text-[#C3CCD6] mt-1">{img.field_label}</p>
+                      <p className="text-xs text-[#3D4B5C] mt-1">{img.field_label}</p>
                       {img.total_in_study > 1 && (
-                        <p className="text-[10px] text-[#7C8794]">1 of {img.total_in_study} images — see full series in Imaging</p>
+                        <p className="text-[11px] text-[#6B7785]">1 of {img.total_in_study} images — see full series in Imaging</p>
                       )}
                     </div>
                   ))}
@@ -3277,39 +3240,39 @@ function CasePacketScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
               <SectionHeader>Treatment &amp; Follow-up Plan</SectionHeader>
               {packet.decision ? (
                 <div className="space-y-1.5">
-                  <p className="text-sm text-[#E7ECF2] font-medium">{packet.decision.recommendation}</p>
-                  {packet.decision.rationale && <p className="text-xs text-[#C3CCD6]">{packet.decision.rationale}</p>}
+                  <p className="text-sm text-[#1B2733] font-medium">{packet.decision.recommendation}</p>
+                  {packet.decision.rationale && <p className="text-xs text-[#3D4B5C]">{packet.decision.rationale}</p>}
                   {packet.decision.next_step && (
-                    <p className="text-xs text-[#8B96A3]">Next step: {packet.decision.next_step}</p>
+                    <p className="text-xs text-[#5B6877]">Next step: {packet.decision.next_step}</p>
                   )}
                   {packet.decision.responsible_provider && (
-                    <p className="text-xs text-[#8B96A3]">Responsible: {packet.decision.responsible_provider}</p>
+                    <p className="text-xs text-[#5B6877]">Responsible: {packet.decision.responsible_provider}</p>
                   )}
                   {packet.decision.surveillance_protocol && (
-                    <p className="text-xs text-[#8B96A3]">Surveillance protocol: {packet.decision.surveillance_protocol}</p>
+                    <p className="text-xs text-[#5B6877]">Surveillance protocol: {packet.decision.surveillance_protocol}</p>
                   )}
                   {packet.decision.follow_up_date && (
-                    <p className="text-xs font-medium text-[#0EA5E9]">Follow-up due {packet.decision.follow_up_date}</p>
+                    <p className="text-xs font-medium text-[#0B63B6]">Follow-up due {packet.decision.follow_up_date}</p>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-[#7C8794] italic">No decision recorded yet for this case.</p>
+                <p className="text-xs text-[#6B7785] italic">No decision recorded yet for this case.</p>
               )}
             </Card>
 
             {/* Full checklist */}
             <Card>
-              <div className="px-5 py-4 border-b border-[#161B22]">
+              <div className="px-5 py-4 border-b border-[#E4E8ED]">
                 <SectionHeader>Full Checklist</SectionHeader>
               </div>
               <table className="w-full">
-                <tbody className="divide-y divide-[#0A0E14]">
+                <tbody className="divide-y divide-[#E4E8ED]">
                   {packet.checklist.map((c) => (
                     <tr key={c.key}>
                       <td className="px-5 py-2.5">
-                        <p className="text-xs text-[#E7ECF2]">{c.field}</p>
+                        <p className="text-xs text-[#1B2733]">{c.field}</p>
                         {c.value && (
-                          <p className="text-[10px] text-[#8291A3]">
+                          <p className="text-[11px] text-[#5B6877]">
                             {c.data_type === "boolean" ? (c.value === "true" ? "Present" : "Absent") : c.value}
                           </p>
                         )}
@@ -3339,7 +3302,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
     checklist: { key: string; field: string; category: string; data_type?: string; status: string; value: string | null; source: string | null; measurement_method?: string | null; measurement_precision?: string | null; measurement_length_type?: string | null; basal_diameter_mm?: number | null; apical_height_mm?: number | null; required?: boolean }[];
     missing_information: string[];
   } | null>(null);
-  const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string; diagnosis: string | null; laterality: string | null } | null>(null);
+  const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string; diagnosis: string | null; laterality: string | null; primary_provider?: string | null } | null>(null);
 
   useEffect(() => {
     apiFetch(`${API_BASE}/cases/${caseId}/readiness`)
@@ -3364,56 +3327,56 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
     <div className="flex-1 flex flex-col overflow-hidden">
       <TopBar
         title="Tumor Board — Case Summary"
-        subtitle="Nov 14, 2024 · Multidisciplinary Oncology Conference"
+        subtitle="Multidisciplinary Oncology Conference"
         action={
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.print()}
-              className="border border-[#232A34] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#0A0E14] transition-colors"
+              className="border border-[#D5DBE3] text-[#3D4B5C] px-3 py-2 rounded text-sm hover:bg-[#F6F8FA] transition-colors"
             >
               Export PDF
             </button>
             <button
               onClick={() => onNav("tumor-board-decision")}
-              className="bg-[#0F2D56] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#0F2D56]/90 transition-colors"
+              className="bg-[#0F2D56] text-white px-4 py-2 rounded text-sm font-medium hover:bg-[#0B2342] transition-colors"
             >
-              Record Decision →
+              Record Decision
             </button>
           </div>
         }
       />
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         <div className="grid grid-cols-[1fr_260px] gap-6">
           <div className="space-y-5">
             {/* Case header */}
             <Card className="p-6 border-l-4 border-l-[#0F2D56]">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-xl font-semibold text-[#E7ECF2]">{caseInfo ? caseInfo.patient : "Loading…"}</h2>
-                  <p className="font-mono text-xs text-[#8291A3] mt-0.5">
+                  <h2 className="text-xl font-semibold text-[#1B2733]">{caseInfo ? caseInfo.patient : "Loading…"}</h2>
+                  <p className="font-mono text-xs text-[#5B6877] mt-0.5">
                     {caseInfo ? caseInfo.mrn : ""}
                   </p>
                 </div>
                 <div className="text-right">
                   <StatusBadge status="warning" />
-                  <p className="text-[10px] text-[#8291A3] mt-1">
+                  <p className="text-[11px] text-[#5B6877] mt-1">
                     Readiness: {readinessPct !== null ? `${readinessPct}%` : "…"}
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#161B22]">
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#E4E8ED]">
                 {[
                   { label: "Diagnosis", value: caseInfo?.diagnosis ?? "Not recorded" },
                   { label: "Laterality", value: caseInfo?.laterality ?? "Not recorded" },
                   { label: "TNM Stage", value: "Not recorded" },
                   { label: "Date of Dx", value: "Not recorded" },
                   { label: "Referring Provider", value: "Not recorded" },
-                  { label: "Primary Provider", value: "Dr. A. Reyes" },
+                  { label: "Primary Provider", value: caseInfo?.primary_provider ?? "Not recorded" },
                 ].map((f) => (
                   <div key={f.label}>
-                    <p className="text-[10px] text-[#8291A3] uppercase tracking-wider mb-0.5">{f.label}</p>
-                    <p className={`text-sm font-medium ${f.value === "Not recorded" ? "text-[#7C8794] italic" : "text-[#E7ECF2]"}`}>{f.value}</p>
+                    <p className="text-[11px] text-[#5B6877] mb-0.5">{f.label}</p>
+                    <p className={`text-sm font-medium ${f.value === "Not recorded" ? "text-[#6B7785] italic" : "text-[#1B2733]"}`}>{f.value}</p>
                   </div>
                 ))}
               </div>
@@ -3425,20 +3388,20 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
               {fieldValue("tumor_location") || fieldValue("tumor_dimensions") ? (
                 <div className="space-y-2.5">
                   {fieldValue("tumor_location") && (
-                    <div className="flex justify-between border-b border-[#0A0E14] pb-2">
-                      <span className="text-xs text-[#8291A3] shrink-0 mr-4">Location</span>
-                      <span className="text-xs font-medium text-[#E7ECF2] text-right">{fieldValue("tumor_location")}</span>
+                    <div className="flex justify-between border-b border-[#E4E8ED] pb-2">
+                      <span className="text-xs text-[#5B6877] shrink-0 mr-4">Location</span>
+                      <span className="text-xs font-medium text-[#1B2733] text-right">{fieldValue("tumor_location")}</span>
                     </div>
                   )}
                   {fieldValue("tumor_dimensions") && (
                     <div className="flex justify-between">
-                      <span className="text-xs text-[#8291A3] shrink-0 mr-4">Measurements</span>
-                      <span className="text-xs font-medium text-[#E7ECF2] text-right">{fieldValue("tumor_dimensions")}</span>
+                      <span className="text-xs text-[#5B6877] shrink-0 mr-4">Measurements</span>
+                      <span className="text-xs font-medium text-[#1B2733] text-right">{fieldValue("tumor_dimensions")}</span>
                     </div>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-[#7C8794] italic">Not yet recorded for this patient.</p>
+                <p className="text-xs text-[#6B7785] italic">Not yet recorded for this patient.</p>
               )}
             </Card>
 
@@ -3449,16 +3412,16 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
               {imagingItems.length > 0 ? (
                 <div className="space-y-3">
                   {imagingItems.map((i) => (
-                    <div key={i.key} className={`flex gap-3 p-3 rounded border ${i.status === "missing" ? "bg-red-500/10 border-red-500/30" : i.status === "pending" ? "bg-amber-500/10 border-amber-500/30" : "bg-[#0A0E14] border-[#161B22]"}`}>
-                      <span className={`font-mono text-[11px] font-semibold w-14 shrink-0 pt-0.5 ${i.status === "missing" ? "text-red-400" : i.status === "pending" ? "text-amber-400" : "text-[#0EA5E9]"}`}>{i.field}</span>
-                      <p className={`text-xs leading-relaxed ${i.status === "missing" ? "text-red-400 italic" : i.status === "pending" ? "text-amber-300 italic" : "text-[#C3CCD6]"}`}>
+                    <div key={i.key} className={`flex gap-3 p-3 rounded border ${i.status === "missing" ? "bg-red-50 border-red-200" : i.status === "pending" ? "bg-amber-50 border-amber-200" : "bg-[#FFFFFF] border-[#E4E8ED]"}`}>
+                      <span className={`font-mono text-xs font-semibold w-14 shrink-0 pt-0.5 ${i.status === "missing" ? "text-red-700" : i.status === "pending" ? "text-amber-700" : "text-[#0B63B6]"}`}>{i.field}</span>
+                      <p className={`text-xs leading-relaxed ${i.status === "missing" ? "text-red-700 italic" : i.status === "pending" ? "text-amber-700 italic" : "text-[#3D4B5C]"}`}>
                         {i.value ?? (i.status === "pending" ? "Awaiting results" : "Not obtained")}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-[#8291A3]">Loading…</p>
+                <p className="text-xs text-[#5B6877]">Loading…</p>
               )}
             </Card>
 
@@ -3468,13 +3431,13 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
               <SectionHeader>Molecular & Genetic Testing</SectionHeader>
               {(() => {
                 const molecularItems = readinessData?.checklist?.filter((c) => c.category === "molecular") ?? [];
-                if (molecularItems.length === 0) return <p className="text-xs text-[#8291A3] italic">No molecular testing configured for this disease profile.</p>;
+                if (molecularItems.length === 0) return <p className="text-xs text-[#5B6877] italic">No molecular testing configured for this disease profile.</p>;
                 return (
                   <div className="space-y-2.5">
                     {molecularItems.map((item) => (
-                      <div key={item.key} className="flex items-center justify-between py-2 border-b border-[#0A0E14] last:border-0">
-                        <span className="text-xs text-[#C3CCD6]">{item.field}</span>
-                        <span className={`text-xs font-medium ${item.status === "complete" ? "text-[#E7ECF2]" : "text-amber-400"}`}>
+                      <div key={item.key} className="flex items-center justify-between py-2 border-b border-[#E4E8ED] last:border-0">
+                        <span className="text-xs text-[#3D4B5C]">{item.field}</span>
+                        <span className={`text-xs font-medium ${item.status === "complete" ? "text-[#1B2733]" : "text-amber-700"}`}>
                           {item.value ?? "Not yet recorded"}
                         </span>
                       </div>
@@ -3487,9 +3450,9 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
             {/* Clinical Question — genuinely auto-generated from real case
                 data, for every patient. This is the actual "auto-generate
                 structured case summary" the product is meant to do. */}
-            <Card className="p-5 border-l-4 border-l-[#0EA5E9]">
+            <Card className="p-5 border-l-4 border-l-[#0B63B6]">
               <SectionHeader>Question for Multidisciplinary Team</SectionHeader>
-              <p className="text-[#E7ECF2] text-sm leading-relaxed">
+              <p className="text-[#1B2733] text-sm leading-relaxed">
                 Patient with {caseInfo?.diagnosis ?? "an undocumented diagnosis"}
                 {caseInfo?.laterality ? ` (${caseInfo.laterality})` : ""}.
                 {fieldValue("tumor_location") ? ` ${fieldValue("tumor_location")}` : ""}
@@ -3501,7 +3464,7 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
                     : " Molecular testing not yet available.";
                 })()}
               </p>
-              <p className="text-[#C3CCD6] text-sm leading-relaxed mt-3 font-medium">
+              <p className="text-[#3D4B5C] text-sm leading-relaxed mt-3 font-medium">
                 {readinessData && readinessData.missing_information.length > 0
                   ? `Case is ${readinessData.readiness_pct}% documented. Outstanding before full review: ${readinessData.missing_information.join(", ")}.`
                   : "Case is fully documented and ready for treatment recommendation."}
@@ -3511,52 +3474,18 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
 
           {/* Right panel */}
           <div className="space-y-4">
-            <Card className="p-4">
-              <SectionHeader>Participating Specialties</SectionHeader>
-              <div className="space-y-3">
-                {[
-                  { specialty: "Ophthalmology", provider: "Dr. Alicia M. Reyes, MD", role: "Presenting Physician" },
-                  { specialty: "Radiation Oncology", provider: "Dr. Kevin S. Hartman, MD", role: "Treatment Planning" },
-                  { specialty: "Radiation Physics", provider: "Dr. Priya N. Mehta, PhD", role: "Dosimetry" },
-                ].map((p) => (
-                  <div key={p.specialty} className="border border-[#161B22] rounded p-3">
-                    <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider">{p.specialty}</p>
-                    <p className="text-xs font-medium text-[#E7ECF2] mt-0.5">{p.provider}</p>
-                    <p className="text-[10px] text-[#8291A3]">{p.role}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-[#8291A3] italic mt-3">
-                Medical oncology and other specialists join as needed for higher-risk or metastatic cases.
-              </p>
-            </Card>
 
-            <Card className="p-4">
-              <SectionHeader>Meeting Details</SectionHeader>
-              <div className="space-y-2 text-xs">
-                {[
-                  { label: "Date", value: "November 14, 2024" },
-                  { label: "Time", value: "2:00 PM EST" },
-                  { label: "Format", value: "Video conference" },
-                ].map((d) => (
-                  <div key={d.label} className="flex justify-between">
-                    <span className="text-[#8291A3]">{d.label}</span>
-                    <span className="text-[#E7ECF2] font-medium">{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
 
             <Card className="p-4">
               <SectionHeader>Previous Treatment</SectionHeader>
-              <p className="text-xs text-[#8291A3] italic">No prior treatment recorded for this diagnosis.</p>
+              <p className="text-xs text-[#5B6877] italic">No prior treatment recorded for this diagnosis.</p>
             </Card>
 
             <button
               onClick={() => onNav("tumor-board-decision")}
-              className="w-full bg-[#0F2D56] text-white rounded py-3 text-sm font-semibold hover:bg-[#0F2D56]/90 transition-colors"
+              className="w-full bg-[#0F2D56] text-white rounded py-3 text-sm font-semibold hover:bg-[#0B2342] transition-colors"
             >
-              Record MDT Decision →
+              Record MDT Decision
             </button>
           </div>
         </div>
@@ -3567,16 +3496,16 @@ function TumorBoardScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: strin
 
 // 7. TUMOR BOARD DECISION
 function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) => void; caseId: string }) {
-  const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string } | null>(null);
+  const [caseInfo, setCaseInfo] = useState<{ patient: string; mrn: string; diagnosis?: string | null } | null>(null);
   const [recorded, setRecorded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [recommendation, setRecommendation] = useState("Iodine-125 (I-125) plaque brachytherapy");
-  const [rationale, setRationale] = useState("Patient presents with T2b choroidal melanoma (11.2 × 9.8 mm base, 4.6 mm height) with Monosomy 3 and BAP1 loss — indicating high-risk molecular profile. Plaque brachytherapy selected given tumor size within treatable range, desire for globe preservation, and proximity to fovea. Proton beam therapy discussed but deferred given local expertise. Systemic surveillance with liver MRI every 6 months recommended given high-risk GEP profile (result pending).");
-  const [nextStep, setNextStep] = useState("Simulate for I-125 plaque brachytherapy");
-  const [responsible, setResponsible] = useState("Dr. K. Hartman (Radiation Oncology)");
-  const [followUpDate, setFollowUpDate] = useState("2024-12-05");
-  const [surveillanceProtocol, setSurveillanceProtocol] = useState("Liver MRI every 6 months");
+  const [recommendation, setRecommendation] = useState("");
+  const [rationale, setRationale] = useState("");
+  const [nextStep, setNextStep] = useState("");
+  const [responsible, setResponsible] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [surveillanceProtocol, setSurveillanceProtocol] = useState("");
 
   useEffect(() => {
     apiFetch(`${API_BASE}/cases/${caseId}`)
@@ -3596,7 +3525,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
           setNextStep(data.next_step ?? "");
           setResponsible(data.responsible_provider ?? "");
           setFollowUpDate(data.follow_up_date ?? "");
-          setSurveillanceProtocol(data.surveillance_protocol ?? "Liver MRI every 6 months");
+          setSurveillanceProtocol(data.surveillance_protocol ?? "");
           setRecorded(true);
         }
       })
@@ -3634,16 +3563,16 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar title="MDT Decision Recorded" subtitle={caseInfo ? `${caseInfo.patient} · ${caseInfo.mrn}` : ""} />
-        <div className="flex-1 overflow-y-auto px-8 py-12 bg-[#0A0E14] flex items-start justify-center">
+        <div className="flex-1 overflow-y-auto px-8 py-12 bg-[#FFFFFF] flex items-start justify-center">
           <div className="max-w-lg w-full">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto mb-4">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#34D399" strokeWidth="2.5">
+              <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#1B7F5C" strokeWidth="2.5">
                   <path d="M5 14l6 6L23 8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-semibold text-[#E7ECF2]">Decision Recorded</h2>
-              <p className="text-[#8B96A3] text-sm mt-2">Multidisciplinary tumor board decision has been saved and assigned.</p>
+              <h2 className="text-2xl font-semibold text-[#1B2733]">Decision Recorded</h2>
+              <p className="text-[#5B6877] text-sm mt-2">Multidisciplinary tumor board decision has been saved and assigned.</p>
             </div>
 
             <Card className="p-6 space-y-4">
@@ -3654,9 +3583,9 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                 { label: "Follow-up Date", value: followUpDate || "Not set" },
                 { label: "Surveillance Protocol", value: surveillanceProtocol },
               ].map((f) => (
-                <div key={f.label} className="border-b border-[#0A0E14] pb-3 last:border-0">
-                  <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">{f.label}</p>
-                  <p className="text-sm text-[#E7ECF2]">{f.value}</p>
+                <div key={f.label} className="border-b border-[#E4E8ED] pb-3 last:border-0">
+                  <p className="text-[11px] font-semibold text-[#5B6877] mb-1">{f.label}</p>
+                  <p className="text-sm text-[#1B2733]">{f.value}</p>
                 </div>
               ))}
             </Card>
@@ -3664,13 +3593,13 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => onNav("patient")}
-                className="flex-1 border border-[#232A34] text-[#C3CCD6] py-2.5 rounded text-sm font-medium hover:bg-[#0A0E14] transition-colors"
+                className="flex-1 border border-[#D5DBE3] text-[#3D4B5C] py-2.5 rounded text-sm font-medium hover:bg-[#F6F8FA] transition-colors"
               >
                 Return to Patient
               </button>
               <button
                 onClick={() => onNav("dashboard")}
-                className="flex-1 bg-[#0F2D56] text-white py-2.5 rounded text-sm font-semibold hover:bg-[#0F2D56]/90 transition-colors"
+                className="flex-1 bg-[#0F2D56] text-white py-2.5 rounded text-sm font-semibold hover:bg-[#0B2342] transition-colors"
               >
                 Back to Dashboard
               </button>
@@ -3685,10 +3614,10 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
     <div className="flex-1 flex flex-col overflow-hidden">
       <TopBar
         title="Record MDT Decision"
-        subtitle={caseInfo ? `${caseInfo.patient} · ${caseInfo.mrn} · Tumor Board Nov 14, 2024` : ""}
+        subtitle={caseInfo ? `${caseInfo.patient} · ${caseInfo.mrn}` : ""}
       />
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         <div className="grid grid-cols-[1fr_300px] gap-6 max-w-5xl">
           <div className="space-y-5">
             {/* Treatment recommendation */}
@@ -3703,10 +3632,10 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                   "Other / custom",
                 ].map((opt) => (
                   <label key={opt} className="flex items-center gap-3 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${recommendation === opt ? "border-[#0F2D56] bg-[#0F2D56]" : "border-[#7C8794] group-hover:border-[#8291A3]"}`}>
-                      {recommendation === opt && <div className="w-1.5 h-1.5 rounded-full bg-[#12161D]" />}
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${recommendation === opt ? "border-[#0F2D56] bg-[#0F2D56]" : "border-[#9AA5B1] group-hover:border-[#9AA5B1]"}`}>
+                      {recommendation === opt && <div className="w-1.5 h-1.5 rounded-full bg-[#FFFFFF]" />}
                     </div>
-                    <span className="text-sm text-[#C3CCD6]">{opt}</span>
+                    <span className="text-sm text-[#3D4B5C]">{opt}</span>
                   </label>
                 ))}
               </div>
@@ -3719,7 +3648,7 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                 value={rationale}
                 onChange={(e) => setRationale(e.target.value)}
                 rows={6}
-                className="w-full border border-[#232A34] rounded px-3 py-2.5 text-sm text-[#C3CCD6] bg-[#0A0E14] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all resize-none"
+                className="w-full border border-[#D5DBE3] rounded px-3 py-2.5 text-sm text-[#3D4B5C] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] focus:ring-2 focus:ring-[#0B63B6]/20 transition-all resize-none"
               />
             </Card>
 
@@ -3728,37 +3657,38 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
               <SectionHeader>Next Steps & Action Items</SectionHeader>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-[#C3CCD6] mb-1.5">Immediate Next Step</label>
+                  <label className="block text-xs font-medium text-[#3D4B5C] mb-1.5">Immediate Next Step</label>
                   <input
                     value={nextStep}
                     onChange={(e) => setNextStep(e.target.value)}
-                    className="w-full border border-[#232A34] rounded px-3 py-2.5 text-sm text-[#C3CCD6] bg-[#0A0E14] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
+                    className="w-full border border-[#D5DBE3] rounded px-3 py-2.5 text-sm text-[#3D4B5C] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] focus:ring-2 focus:ring-[#0B63B6]/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#C3CCD6] mb-1.5">Responsible Provider</label>
+                  <label className="block text-xs font-medium text-[#3D4B5C] mb-1.5">Responsible Provider</label>
                   <input
                     value={responsible}
                     onChange={(e) => setResponsible(e.target.value)}
-                    className="w-full border border-[#232A34] rounded px-3 py-2.5 text-sm text-[#C3CCD6] bg-[#0A0E14] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
+                    className="w-full border border-[#D5DBE3] rounded px-3 py-2.5 text-sm text-[#3D4B5C] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] focus:ring-2 focus:ring-[#0B63B6]/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#C3CCD6] mb-1.5">Follow-up Date</label>
+                  <label className="block text-xs font-medium text-[#3D4B5C] mb-1.5">Follow-up Date</label>
                   <input
                     type="date"
                     value={followUpDate}
                     onChange={(e) => setFollowUpDate(e.target.value)}
-                    className="w-full border border-[#232A34] rounded px-3 py-2.5 text-sm text-[#C3CCD6] bg-[#0A0E14] focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all"
+                    className="w-full border border-[#D5DBE3] rounded px-3 py-2.5 text-sm text-[#3D4B5C] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] focus:ring-2 focus:ring-[#0B63B6]/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#C3CCD6] mb-1.5">Surveillance Protocol</label>
+                  <label className="block text-xs font-medium text-[#3D4B5C] mb-1.5">Surveillance Protocol</label>
                   <select
                     value={surveillanceProtocol}
                     onChange={(e) => setSurveillanceProtocol(e.target.value)}
-                    className="w-full border border-[#232A34] rounded px-3 py-2.5 text-sm text-[#C3CCD6] bg-[#0A0E14] focus:outline-none focus:border-[#0EA5E9] transition-all"
+                    className="w-full border border-[#D5DBE3] rounded px-3 py-2.5 text-sm text-[#3D4B5C] bg-[#FFFFFF] focus:outline-none focus:border-[#0B63B6] transition-all"
                   >
+                    <option value="">Select protocol</option>
                     <option>Liver MRI every 6 months</option>
                     <option>Liver MRI every 12 months</option>
                     <option>Annual LFTs + imaging</option>
@@ -3767,35 +3697,16 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
                 </div>
               </div>
 
-              {/* Additional tasks */}
-              <div className="mt-4 pt-4 border-t border-[#161B22]">
-                <p className="text-xs font-medium text-[#C3CCD6] mb-2">Additional Tasks Assigned</p>
-                <div className="space-y-2">
-                  {[
-                    { task: "Await GEP result — adjust systemic recommendation if Class 2", assignee: "Dr. L. Brennan" },
-                    { task: "Radiation physics simulation — I-125 plaque dosimetry", assignee: "Dr. P. Mehta" },
-                    { task: "Schedule radiation oncology new patient visit", assignee: "Radiation Oncology Coordinator" },
-                  ].map((t, i) => (
-                    <div key={i} className="flex items-center gap-3 p-2.5 bg-[#0A0E14] rounded border border-[#161B22]">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#0EA5E9] shrink-0" />
-                      <div className="flex-1 text-xs">
-                        <span className="text-[#C3CCD6]">{t.task}</span>
-                        <span className="text-[#8291A3]"> → {t.assignee}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </Card>
 
             {saveError && (
-              <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">{saveError}</p>
+              <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">{saveError}</p>
             )}
 
             <button
               onClick={handleSaveDecision}
-              disabled={isSaving}
-              className="w-full bg-[#0F2D56] text-white py-3 rounded text-sm font-semibold hover:bg-[#0F2D56]/90 transition-colors disabled:opacity-60"
+              disabled={isSaving || !recommendation}
+              className="w-full bg-[#0F2D56] text-white py-3 rounded text-sm font-semibold hover:bg-[#0B2342] transition-colors disabled:opacity-60"
             >
               {isSaving ? "Saving…" : "Save Decision & Mark Case Complete"}
             </button>
@@ -3807,38 +3718,18 @@ function TumorBoardDecisionScreen({ onNav, caseId }: { onNav: (s: Screen, caseId
               <SectionHeader>Case Summary</SectionHeader>
               <div className="space-y-2 text-xs">
                 {[
-                  { label: "Patient", value: "M. Sullivan, 67F" },
-                  { label: "Diagnosis", value: "Choroidal Melanoma OD" },
-                  { label: "Stage", value: "T2bN0M0", mono: true },
-                  { label: "Dimensions", value: "11.2 × 9.8 mm / 4.6 mm H", mono: true },
-                  { label: "Chromosome 3", value: "Monosomy 3" },
-                  { label: "BAP1", value: "Loss detected" },
-                  { label: "GEP", value: "Pending" },
+                  { label: "Patient", value: caseInfo?.patient ?? "-" },
+                  { label: "MRN", value: caseInfo?.mrn ?? "-", mono: true },
+                  { label: "Diagnosis", value: caseInfo?.diagnosis ?? "Not recorded" },
                 ].map((f) => (
-                  <div key={f.label} className="flex justify-between border-b border-[#0A0E14] pb-1.5">
-                    <span className="text-[#8291A3]">{f.label}</span>
-                    <span className={`text-[#E7ECF2] font-medium ${(f as any).mono ? "font-mono text-[10px]" : ""}`}>{f.value}</span>
+                  <div key={f.label} className="flex justify-between border-b border-[#E4E8ED] pb-1.5">
+                    <span className="text-[#5B6877]">{f.label}</span>
+                    <span className={`text-[#1B2733] font-medium ${(f as any).mono ? "font-mono text-[11px]" : ""}`}>{f.value}</span>
                   </div>
                 ))}
               </div>
             </Card>
 
-            <Card className="p-4">
-              <SectionHeader>Attending Physicians</SectionHeader>
-              <div className="space-y-2 text-xs">
-                {[
-                  { name: "Dr. A. Reyes", spec: "Ophthalmology" },
-                  { name: "Dr. K. Hartman", spec: "Radiation Oncology" },
-                  { name: "Dr. P. Mehta", spec: "Radiation Physics" },
-                  { name: "Dr. L. Brennan", spec: "Medical Oncology" },
-                ].map((p) => (
-                  <div key={p.name} className="flex justify-between">
-                    <span className="text-[#E7ECF2] font-medium">{p.name}</span>
-                    <span className="text-[#8291A3]">{p.spec}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
           </div>
         </div>
       </div>
@@ -3942,22 +3833,22 @@ function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: s
       `}</style>
 
       {/* Patient-facing header */}
-      <div className="px-8 py-5 shrink-0 care-summary-print-hide" style={{ background: "linear-gradient(to bottom, #0F2D56, #0A0E14)" }}>
+      <div className="px-8 py-4 shrink-0 bg-white border-b border-[#D5DBE3] care-summary-print-hide">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center">
+            <div className="w-8 h-8 rounded bg-[#0F2D56] text-white flex items-center justify-center">
               <EyeIcon size={14} />
             </div>
             <div>
-              <p className="text-white font-semibold">UvealCare Patient Portal</p>
-              <p className="text-white/50 text-xs">My Care Pathway</p>
+              <p className="text-[#1B2733] font-semibold">UvealCare Patient Portal</p>
+              <p className="text-[#5B6877] text-xs">My Care Pathway</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-white/60 text-xs">{caseInfo?.patient ?? "…"}</span>
+            <span className="text-[#5B6877] text-xs">{caseInfo?.patient ?? "…"}</span>
             <button
               onClick={() => onNav("dashboard")}
-              className="text-white/60 text-xs hover:text-white transition-colors border border-white/20 px-3 py-1.5 rounded"
+              className="text-[#3D4B5C] text-xs hover:bg-[#F6F8FA] transition-colors border border-[#C4CCD6] px-3 py-1.5 rounded"
             >
               Staff View
             </button>
@@ -3965,18 +3856,18 @@ function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: s
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto bg-[#FFFFFF]">
         <div className="max-w-3xl mx-auto px-8 py-10">
           <div className="mb-8 flex items-start justify-between gap-4 care-summary-print-hide">
             <div>
-              <h1 className="text-2xl font-semibold text-[#E7ECF2]">Your Care Pathway</h1>
-              <p className="text-[#8B96A3] text-sm mt-1">
+              <h1 className="text-2xl font-semibold text-[#1B2733]">Your Care Pathway</h1>
+              <p className="text-[#5B6877] text-sm mt-1">
                 {firstName ? `Hello, ${firstName}.` : "Hello."} This page shows where you are in your care and what to expect next.
               </p>
             </div>
             <button
               onClick={() => window.print()}
-              className="shrink-0 border border-[#2E3742] text-[#C3CCD6] px-3 py-2 rounded text-sm hover:bg-[#161B22] transition-colors"
+              className="shrink-0 border border-[#C4CCD6] text-[#3D4B5C] px-3 py-2 rounded text-sm hover:bg-[#EEF2F6] transition-colors"
             >
               Download / Print Summary
             </button>
@@ -3984,13 +3875,13 @@ function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: s
 
           {/* Current step callout */}
           {caseInfo && (
-            <div className="mb-8 p-5 bg-sky-500/10 border border-sky-500/30 rounded-lg flex items-start gap-4 care-summary-print-hide">
+            <div className="mb-8 p-5 bg-sky-50 border border-sky-200 rounded-lg flex items-start gap-4 care-summary-print-hide">
               <div className="w-9 h-9 rounded-full bg-[#0F2D56] flex items-center justify-center shrink-0 mt-0.5">
                 <span className="text-white text-sm font-bold">{currentIndex + 1}</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#E7ECF2]">You are currently at: {caseInfo.care_stage}</p>
-                <p className="text-sm text-[#C3CCD6] mt-1">
+                <p className="text-sm font-semibold text-[#1B2733]">You are currently at: {caseInfo.care_stage}</p>
+                <p className="text-sm text-[#3D4B5C] mt-1">
                   {STAGE_PLAIN_LANGUAGE[caseInfo.care_stage] ?? "Your care team is coordinating your next steps."}
                 </p>
               </div>
@@ -4010,40 +3901,40 @@ function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: s
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
                       isDone ? "bg-emerald-500 border-emerald-500 text-white" :
                       isCurrent ? "bg-[#0F2D56] border-[#0F2D56] text-white" :
-                      "bg-[#12161D] border-[#232A34] text-[#7C8794]"
+                      "bg-[#FFFFFF] border-[#D5DBE3] text-[#6B7785]"
                     }`}>
                       {isDone ? (
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M2.5 7l3 3L11.5 4" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       ) : isCurrent ? (
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#0EA5E9]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#0B63B6]" />
                       ) : (
                         <span className="text-xs font-semibold">{i + 1}</span>
                       )}
                     </div>
                     {i < careStages.length - 1 && (
-                      <div className={`w-0.5 flex-1 my-1 ${isDone ? "bg-emerald-300" : "bg-[#232A34]"}`} style={{ minHeight: "32px" }} />
+                      <div className={`w-0.5 flex-1 my-1 ${isDone ? "bg-emerald-300" : "bg-[#E4E8ED]"}`} style={{ minHeight: "32px" }} />
                     )}
                   </div>
 
                   <div className={`flex-1 pb-8 ${i === careStages.length - 1 ? "pb-0" : ""}`}>
                     <div className={`rounded-lg border p-4 ${
-                      isCurrent ? "bg-[#12161D] border-[#0F2D56] shadow-sm" :
-                      isDone ? "bg-emerald-500/10 border-emerald-500/30" :
-                      "bg-[#12161D] border-[#232A34]"
+                      isCurrent ? "bg-[#FFFFFF] border-[#0F2D56] shadow-sm" :
+                      isDone ? "bg-emerald-50 border-emerald-200" :
+                      "bg-[#FFFFFF] border-[#D5DBE3]"
                     }`}>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`font-semibold ${isCurrent ? "text-[#0EA5E9]" : isDone ? "text-emerald-300" : "text-[#7C8794]"}`}>
-                          {isDone && "✓ "}{stageName}
+                        <h3 className={`font-semibold ${isCurrent ? "text-[#0B63B6]" : isDone ? "text-emerald-700" : "text-[#6B7785]"}`}>
+                          {stageName}{isDone && <span className="ml-2 text-xs font-normal text-emerald-700">Completed</span>}
                         </h3>
                         {isCurrent && (
-                          <span className="text-[10px] font-semibold text-white bg-[#0F2D56] px-2 py-0.5 rounded">
+                          <span className="text-[11px] font-semibold text-white bg-[#0F2D56] px-2 py-0.5 rounded">
                             You are here
                           </span>
                         )}
                       </div>
-                      <p className={`text-sm leading-relaxed ${isUpcoming ? "text-[#8291A3]" : "text-[#C3CCD6]"}`}>
+                      <p className={`text-sm leading-relaxed ${isUpcoming ? "text-[#5B6877]" : "text-[#3D4B5C]"}`}>
                         {STAGE_PLAIN_LANGUAGE[stageName] ?? "Your care team will guide you through this step."}
                       </p>
                     </div>
@@ -4057,19 +3948,19 @@ function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: s
               Only ever shows pre-written translations for known,
               controlled clinical options; anything else honestly says
               to ask the care team rather than guessing. */}
-          <div className="mt-8 p-6 bg-[#12161D] rounded-lg border border-[#232A34] care-summary-print-show">
-            <h2 className="text-lg font-semibold text-[#E7ECF2] mb-4">My Care Summary</h2>
+          <div className="mt-8 p-6 bg-[#FFFFFF] rounded-lg border border-[#D5DBE3] care-summary-print-show">
+            <h2 className="text-lg font-semibold text-[#1B2733] mb-4">My Care Summary</h2>
 
             <div className="mb-4">
-              <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Your Diagnosis</p>
-              <p className="text-sm text-[#C3CCD6] leading-relaxed">
+              <p className="text-[11px] font-semibold text-[#5B6877] mb-1">Your Diagnosis</p>
+              <p className="text-sm text-[#3D4B5C] leading-relaxed">
                 {plainLanguageDiagnosis(caseInfo?.diagnosis ?? null, caseInfo?.laterality ?? null)}
               </p>
             </div>
 
             <div className="mb-4">
-              <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Treatment Plan</p>
-              <p className="text-sm text-[#C3CCD6] leading-relaxed">
+              <p className="text-[11px] font-semibold text-[#5B6877] mb-1">Treatment Plan</p>
+              <p className="text-sm text-[#3D4B5C] leading-relaxed">
                 {decision?.recommendation
                   ? (TREATMENT_PLAIN_LANGUAGE[decision.recommendation] ?? "Your care team has recommended a treatment plan — ask them to walk you through the details.")
                   : "A treatment plan hasn't been finalized yet. Your care team will discuss this with you once it's decided."}
@@ -4077,8 +3968,8 @@ function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: s
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold text-[#8291A3] uppercase tracking-wider mb-1">Follow-up / Surveillance Plan</p>
-              <p className="text-sm text-[#C3CCD6] leading-relaxed">
+              <p className="text-[11px] font-semibold text-[#5B6877] mb-1">Follow-up / Surveillance Plan</p>
+              <p className="text-sm text-[#3D4B5C] leading-relaxed">
                 {decision?.surveillance_protocol
                   ? (SURVEILLANCE_PLAIN_LANGUAGE[decision.surveillance_protocol] ?? "A follow-up plan has been set — ask your care team for the details.")
                   : "A follow-up plan will be set once your treatment plan is finalized."}
@@ -4086,14 +3977,14 @@ function PatientPathwayScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: s
             </div>
           </div>
 
-          <div className="mt-8 p-5 bg-[#12161D] rounded-lg border border-[#232A34] care-summary-print-hide">
-            <p className="text-sm font-semibold text-[#E7ECF2] mb-1">Questions about your care?</p>
-            <p className="text-sm text-[#8B96A3]">
+          <div className="mt-8 p-5 bg-[#FFFFFF] rounded-lg border border-[#D5DBE3] care-summary-print-hide">
+            <p className="text-sm font-semibold text-[#1B2733] mb-1">Questions about your care?</p>
+            <p className="text-sm text-[#5B6877]">
               {caseInfo?.primary_provider
                 ? `Contact ${caseInfo.primary_provider}'s office, or reach out through your patient portal messaging.`
                 : "Contact your care team's office, or reach out through your patient portal messaging."}
             </p>
-            <p className="text-xs text-[#8291A3] mt-2">This information is provided by your care team. All clinical decisions are made by your physicians.</p>
+            <p className="text-xs text-[#5B6877] mt-2">This information is provided by your care team. All clinical decisions are made by your physicians.</p>
           </div>
         </div>
       </div>
@@ -4123,7 +4014,7 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
     <div className="flex-1 flex flex-col overflow-hidden">
       <TopBar title="Settings" subtitle="Account and platform configuration" />
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#0A0E14]">
+      <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#FFFFFF]">
         <div className="max-w-2xl space-y-5">
           {/* Account */}
           <Card className="p-5">
@@ -4135,8 +4026,8 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
                 { label: "Role", value: roleLabel || "—" },
               ].map((r) => (
                 <div key={r.label} className="flex justify-between items-start gap-4">
-                  <span className="text-[#8291A3] text-xs shrink-0">{r.label}</span>
-                  <span className="text-[#E7ECF2] text-xs text-right">{r.value}</span>
+                  <span className="text-[#5B6877] text-xs shrink-0">{r.label}</span>
+                  <span className="text-[#1B2733] text-xs text-right">{r.value}</span>
                 </div>
               ))}
             </div>
@@ -4144,13 +4035,13 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
             {!showLogoutConfirm ? (
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="text-xs font-medium text-red-400 border border-red-500/30 bg-red-500/10 px-3 py-2 rounded hover:bg-red-500/15 transition-colors"
+                className="text-xs font-medium text-red-700 border border-red-200 bg-red-50 px-3 py-2 rounded hover:bg-red-50 transition-colors"
               >
                 Log Out
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#C3CCD6]">Are you sure?</span>
+                <span className="text-xs text-[#3D4B5C]">Are you sure?</span>
                 <button
                   onClick={onLogout}
                   className="text-xs font-medium text-white bg-red-500 px-3 py-1.5 rounded hover:bg-red-600 transition-colors"
@@ -4159,7 +4050,7 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
                 </button>
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="text-xs font-medium text-[#C3CCD6] px-3 py-1.5 rounded hover:bg-[#161B22] transition-colors"
+                  className="text-xs font-medium text-[#3D4B5C] px-3 py-1.5 rounded hover:bg-[#EEF2F6] transition-colors"
                 >
                   Cancel
                 </button>
@@ -4172,23 +4063,23 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
           <Card className="p-5">
             <SectionHeader>Configured Disease Profiles</SectionHeader>
             {!profiles ? (
-              <p className="text-xs text-[#8291A3]">Loading…</p>
+              <p className="text-xs text-[#5B6877]">Loading…</p>
             ) : profiles.length === 0 ? (
-              <p className="text-xs text-[#8291A3] italic">No disease profiles configured yet.</p>
+              <p className="text-xs text-[#5B6877] italic">No disease profiles configured yet.</p>
             ) : (
               <div className="space-y-2">
                 {profiles.map((p) => (
-                  <div key={p.key} className="flex items-center justify-between py-2 border-b border-[#0A0E14] last:border-0">
+                  <div key={p.key} className="flex items-center justify-between py-2 border-b border-[#E4E8ED] last:border-0">
                     <div>
-                      <p className="text-sm font-medium text-[#E7ECF2]">{p.display_name}</p>
-                      <p className="text-[10px] text-[#8291A3] font-mono">{p.key}</p>
+                      <p className="text-sm font-medium text-[#1B2733]">{p.display_name}</p>
+                      <p className="text-[11px] text-[#5B6877] font-mono">{p.key}</p>
                     </div>
-                    <span className="text-xs text-[#8B96A3]">{p.field_count} tracked fields</span>
+                    <span className="text-xs text-[#5B6877]">{p.field_count} tracked fields</span>
                   </div>
                 ))}
               </div>
             )}
-            <p className="text-[10px] text-[#8291A3] mt-3 italic">
+            <p className="text-[11px] text-[#5B6877] mt-3 italic">
               Adding a new disease means defining its fields here — not rewriting the app.
             </p>
           </Card>
@@ -4202,8 +4093,8 @@ function SettingsScreen({ user, onLogout }: { user: { name: string; email: strin
                 { label: "Environment", value: "Local development" },
               ].map((r) => (
                 <div key={r.label} className="flex justify-between items-center">
-                  <span className="text-[#8291A3] text-xs">{r.label}</span>
-                  <span className="font-mono text-xs text-[#E7ECF2]">{r.value}</span>
+                  <span className="text-[#5B6877] text-xs">{r.label}</span>
+                  <span className="font-mono text-xs text-[#1B2733]">{r.value}</span>
                 </div>
               ))}
             </div>
@@ -4360,7 +4251,7 @@ export default function App() {
   const isPatientFacing = screen === "patient-pathway";
 
   return (
-    <div className="flex h-full bg-[#0A0E14]" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="flex h-full bg-[#FFFFFF]" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
       {/* Print-specific styling — this is what makes "Export PDF" produce a
           clean, single-column document instead of a raw screenshot of the
           whole app (sidebar, nav, and all). Only applies when printing. */}
@@ -4406,8 +4297,8 @@ export default function App() {
           </>
         ) : (
           ["patient", "case-readiness", "imaging", "case-packet", "tumor-board", "tumor-board-decision"].includes(screen) && (
-            <div className="flex-1 flex items-center justify-center bg-[#0A0E14]">
-              <p className="text-[#8291A3] text-sm">Loading a patient case…</p>
+            <div className="flex-1 flex items-center justify-center bg-[#FFFFFF]">
+              <p className="text-[#5B6877] text-sm">Loading a patient case…</p>
             </div>
           )
         )}
