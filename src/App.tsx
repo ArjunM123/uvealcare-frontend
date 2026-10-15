@@ -629,6 +629,8 @@ const API_BASE = "https://uvealcare-backend.onrender.com";
 // not just components that received it as a prop, and it doesn't need
 // to trigger re-renders when it changes.
 let authToken: string | null = null;
+// Name of whoever is signed in, used to label the results they save.
+let signedInName = "";
 
 function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
   return fetch(url, {
@@ -1511,7 +1513,7 @@ function PatientScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: string) 
                   {[
                     { key: "phone", label: "Phone", placeholder: "(555) 555-0100" },
                     { key: "insurance", label: "Insurance", placeholder: "e.g. Blue Cross Blue Shield" },
-                    { key: "primary_provider", label: "Primary Provider", placeholder: "Dr. A. Reyes" },
+                    { key: "primary_provider", label: "Primary Provider", placeholder: "Provider name" },
                     { key: "referring_provider", label: "Referring Provider", placeholder: "Dr. J. Thornton" },
                   ].map((f) => (
                     <div key={f.key}>
@@ -1843,7 +1845,7 @@ function CaseReadinessScreen({ onNav, caseId }: { onNav: (s: Screen, caseId?: st
         field_key: fieldKey,
         status: resolveStatus,
         value: resolveStatus === "missing" ? null : resolveValue,
-        source: "Dr. A. Reyes",
+        source: signedInName || "Clinician",
         measurement_method: resolveMethod || null,
         measurement_precision: resolvePrecision || null,
         measurement_length_type: resolveLengthType || null,
@@ -2968,7 +2970,7 @@ function ImagingContent({ onNav, caseId }: { onNav: (s: Screen, caseId?: string)
         field_key: fieldKey,
         status: "complete",
         value: "Result received via UI",
-        source: "Dr. A. Reyes",
+        source: signedInName || "Clinician",
       }),
     })
       .then((res) => res.json())
@@ -6169,6 +6171,7 @@ export default function App() {
   // frontend genuinely forgets it, and it expires on its own after 12 hours.
   const handleLogout = () => {
     authToken = null;
+    signedInName = "";
     setLoggedInUser(null);
     setSelectedDiseaseProfileKey("");
     setSelectedCaseId("");
@@ -6181,6 +6184,7 @@ export default function App() {
       <LoginScreen
         onLogin={(user) => {
           setLoggedInUser(user);
+          signedInName = user.name;
           setScreen("disease-select");
           // disease-select needs its own real history entry too —
           // otherwise it's the one screen Back would always skip
